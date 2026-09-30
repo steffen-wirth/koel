@@ -39,6 +39,7 @@ COPY --from=assets --chown=www-data:www-data /app/public/build /var/www/html/pub
 
 # koel-init exits when there is no .env; real environment variables still take precedence over it
 RUN cp .env.example .env \
+  && cp public/.htaccess.example public/.htaccess \
   && ln -sfn ../storage/app/public public/storage \
   && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
     storage/search-indexes storage/app/public/images \
