@@ -1,18 +1,14 @@
 services:
   koel:
-    # Built from this repository's source (see Dockerfile), not pulled from Docker Hub
-    build:
-      context: .
-      args:
-        BASE_IMAGE: phanan/koel:${KOEL_BASE_VERSION:-9.15.0}
-    image: koel-local:latest
+    # Built from this repository's source (see Dockerfile); nothing is pulled for Koel itself
+    build: .
     restart: unless-stopped
     depends_on:
       - database
     ports:
       - "${KOEL_PORT:-8888}:80"
     environment:
-      # Generate once and keep it: docker run --rm --entrypoint php koel-local:latest artisan key:generate --show
+      # Generate once and keep it: echo "base64:$(openssl rand -base64 32)"
       APP_KEY: ${APP_KEY:?set APP_KEY}
       APP_URL: ${APP_URL:-http://umbrel.local:8888}
       DB_CONNECTION: mysql

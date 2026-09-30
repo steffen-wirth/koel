@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+# Change to program root directory.
+cd /var/www/html
+
+# Run the koel-init script to (optionally) optimize configs and (optionally) initialize/update koel
+su -s '/bin/sh' -c "/usr/local/bin/koel-init" www-data
+
+# Run the next entrypoint in the chain.
+echo "running docker-php-entrypoint with arguments $@"
+exec docker-php-entrypoint "$@"
