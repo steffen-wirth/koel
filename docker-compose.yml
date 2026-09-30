@@ -1,7 +1,10 @@
 services:
   koel:
     # Built from this repository's source (see Dockerfile); nothing is pulled for Koel itself
-    build: .
+    build:
+      context: .
+      # Build containers use the host network so they inherit its DNS (fixes EAI_AGAIN on some hosts)
+      network: host
     restart: unless-stopped
     depends_on:
       - database
