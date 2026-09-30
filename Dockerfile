@@ -7,11 +7,9 @@ COPY . .
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts --no-interaction --ignore-platform-reqs
 
 # --- Front-end assets
-FROM node:22-slim AS assets
+FROM node:22-bookworm AS assets
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
-  && rm -rf /var/lib/apt/lists/* \
-  && corepack enable
+RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
