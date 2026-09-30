@@ -5,6 +5,11 @@ set -e
 # Change to program root directory.
 cd /var/www/html
 
+# Listen on KOEL_PORT (default 80); needed when the container shares the host network
+KOEL_PORT="${KOEL_PORT:-80}"
+sed -i -E "s/^Listen [0-9]+/Listen ${KOEL_PORT}/" /etc/apache2/ports.conf
+sed -i -E "s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${KOEL_PORT}>/" /etc/apache2/sites-available/000-default.conf
+
 # Run the koel-init script to (optionally) optimize configs and (optionally) initialize/update koel
 su -s '/bin/sh' -c "/usr/local/bin/koel-init" www-data
 
