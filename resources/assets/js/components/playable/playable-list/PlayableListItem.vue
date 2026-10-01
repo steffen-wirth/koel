@@ -59,6 +59,9 @@
       <template v-if="isSong(playable)">
         <span v-if="shouldShowColumn('genre')" class="genre">{{ playable.genre || '—' }}</span>
         <span v-if="shouldShowColumn('year')" class="year">{{ playable.year || '—' }}</span>
+        <span v-if="shouldShowColumn('file_created_at')" class="file-created">
+          {{ playable.file_created_at ? new Date(playable.file_created_at).toLocaleDateString() : '—' }}
+        </span>
       </template>
       <span v-if="shouldShowColumn('rating')" class="rating">
         <StarRating v-if="isSong(playable)" :rateable="playable" size="xs" />

@@ -87,6 +87,7 @@ log.json
 ### VitePress ###
 docs/.vitepress/dist
 docs/.vitepress/cache
+docs/plans
 
 demo-credits.json
 

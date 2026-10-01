@@ -121,6 +121,28 @@
       </template>
     </span>
     <span
+      v-if="shouldShowColumn('file_created_at')"
+      class="file-created"
+      data-testid="header-file-created"
+      role="button"
+      title="Sort by file creation date"
+      @click="sort('file_created_at')"
+    >
+      File Created
+      <template v-if="config.sortable">
+        <Icon
+          v-if="sortField === 'file_created_at' && sortOrder === 'asc'"
+          :icon="faCaretUp"
+          class="text-k-highlight"
+        />
+        <Icon
+          v-if="sortField === 'file_created_at' && sortOrder === 'desc'"
+          :icon="faCaretDown"
+          class="text-k-highlight"
+        />
+      </template>
+    </span>
+    <span
       v-if="shouldShowColumn('rating')"
       class="rating"
       data-testid="header-rating"

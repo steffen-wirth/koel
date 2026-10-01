@@ -236,6 +236,8 @@ class SongService
         // Otherwise, we only take the metadata not in the "ignores" config.
         if (!$isFileNew) {
             Arr::forget($data, $config->ignores);
+            // The file creation date is only recorded once, when the song is first stored.
+            Arr::forget($data, 'file_created_at');
         }
 
         $artist = $this->resolveArtist($config->owner, Arr::get($data, 'artist'));

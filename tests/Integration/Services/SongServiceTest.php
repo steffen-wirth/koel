@@ -315,6 +315,26 @@ class SongServiceTest extends TestCase
     }
 
     #[Test]
+    public function fileCreationDateIsOnlySetWhenSongIsNew(): void
+    {
+        Dispatcher::allows('dispatch');
+
+        $info = app(FileScanner::class)->scan(test_path('songs/full.mp3'));
+        $config = ScanConfiguration::make(owner: create_admin());
+        $song = $this->service->createOrUpdateSongFromScan($info, $config);
+
+        self::assertNotNull($song->file_created_at);
+
+        $song->update(['file_created_at' => null]);
+        $song = $this->service->createOrUpdateSongFromScan($info, ScanConfiguration::make(
+            owner: $config->owner,
+            force: true,
+        ), $song);
+
+        self::assertNull($song->fresh()->file_created_at);
+    }
+
+    #[Test]
     public function creatingOrUpdatingFromScanSetsAlbumReleaseYearIfApplicable(): void
     {
         Dispatcher::expects('dispatch')->with(ExtractSongFolderStructureJob::class);

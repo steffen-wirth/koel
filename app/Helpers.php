@@ -10,6 +10,7 @@ use App\Values\Branding;
 use App\Values\HookHandle;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use Webmozart\Assert\Assert;
 
@@ -167,6 +168,18 @@ function get_mtime(string|SplFileInfo $path): int
 
     // Workaround for #344, where getMTime() fails for certain files with Unicode names on Windows.
     return rescue(static fn () => File::lastModified($path)) ?? time();
+}
+
+/**
+ * Get the file's creation (birth) time. Falls back to the modification time if the filesystem doesn't report one.
+ */
+function get_file_creation_time(string|SplFileInfo $path): int
+{
+    $path = is_string($path) ? $path : $path->getPathname();
+
+    $birthTime = (int) rescue(static fn () => trim(Process::run(['stat', '-c', '%W', $path])->throw()->output()));
+
+    return $birthTime > 0 ? $birthTime : get_mtime($path);
 }
 
 /**

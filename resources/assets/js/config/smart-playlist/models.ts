@@ -46,6 +46,11 @@ const models: SmartPlaylistModel[] = [
     label: 'Date Added',
   },
   {
+    name: 'file_created_at',
+    type: 'date',
+    label: 'File Created',
+  },
+  {
     name: 'updated_at',
     type: 'date',
     label: 'Date Modified',

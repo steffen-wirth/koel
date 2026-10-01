@@ -33,6 +33,7 @@ class SongFactory extends Factory
             'owner_id' => fn (array $attributes) => Album::query()->find($attributes['album_id'])->user_id, // @phpstan-ignore-line
             'hash' => fake()->md5(),
             'mtime' => time(),
+            'file_created_at' => now(),
             'mime_type' => 'audio/mpeg',
             'file_size' => fake()->numberBetween(4_000_000, 10_000_000),
         ];

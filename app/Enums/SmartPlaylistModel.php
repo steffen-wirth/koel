@@ -8,6 +8,7 @@ enum SmartPlaylistModel: string
     case ARTIST_NAME = 'artist.name';
     case DATE_ADDED = 'created_at';
     case DATE_MODIFIED = 'updated_at';
+    case FILE_CREATED_AT = 'file_created_at';
     case GENRE = 'genre';
     case LAST_PLAYED = 'interactions.last_played_at';
     case LENGTH = 'length';
@@ -23,6 +24,7 @@ enum SmartPlaylistModel: string
             self::ARTIST_NAME => 'songs.artist_name',
             self::DATE_ADDED => 'songs.created_at',
             self::DATE_MODIFIED => 'songs.updated_at',
+            self::FILE_CREATED_AT => 'songs.file_created_at',
             self::GENRE => 'genres.name',
             self::LENGTH => 'songs.length',
             self::PLAY_COUNT => 'COALESCE(interactions.play_count, 0)',
@@ -34,7 +36,7 @@ enum SmartPlaylistModel: string
 
     public function isDate(): bool
     {
-        return in_array($this, [self::LAST_PLAYED, self::DATE_ADDED, self::DATE_MODIFIED], true);
+        return in_array($this, [self::LAST_PLAYED, self::DATE_ADDED, self::DATE_MODIFIED, self::FILE_CREATED_AT], true);
     }
 
     /**

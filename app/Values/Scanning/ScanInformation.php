@@ -35,6 +35,7 @@ class ScanInformation implements Arrayable
         public ?int $mTime,
         public ?string $mimeType,
         public ?int $fileSize,
+        public ?int $fileCreatedAt = null,
     ) {}
 
     public static function fromGetId3Info(array $info, string $path): self
@@ -93,6 +94,7 @@ class ScanInformation implements Arrayable
             mTime: get_mtime($path),
             mimeType: Str::lower(Arr::get($info, 'mime_type')) ?: 'audio/mpeg',
             fileSize: File::size($path),
+            fileCreatedAt: get_file_creation_time($path),
         );
     }
 
@@ -117,6 +119,7 @@ class ScanInformation implements Arrayable
         ?int $mTime = null,
         ?string $mimeType = null,
         ?int $fileSize = null,
+        ?int $fileCreatedAt = null,
     ): self {
         return new self(
             title: $title,
@@ -139,6 +142,7 @@ class ScanInformation implements Arrayable
             mTime: $mTime,
             mimeType: $mimeType,
             fileSize: $fileSize,
+            fileCreatedAt: $fileCreatedAt,
         );
     }
 
@@ -179,6 +183,7 @@ class ScanInformation implements Arrayable
             'mtime' => $this->mTime,
             'mime_type' => $this->mimeType,
             'file_size' => $this->fileSize,
+            'file_created_at' => $this->fileCreatedAt,
         ];
     }
 }

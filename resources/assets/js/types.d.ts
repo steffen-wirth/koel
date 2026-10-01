@@ -219,6 +219,7 @@ interface Song extends BasePlayable {
   is_public: boolean
   is_external: boolean
   mbid?: string | null
+  file_created_at?: string | null
   file_size?: number | null
   basename?: string
   deleted?: boolean
@@ -287,6 +288,7 @@ interface SmartPlaylistModel {
     | 'title'
     | 'length'
     | 'created_at'
+    | 'file_created_at'
     | 'updated_at'
     | 'album.name'
     | 'artist.name'
@@ -686,6 +688,7 @@ type PlayableListSortField =
       | 'genre'
       | 'year'
       | 'created_at'
+      | 'file_created_at'
       | 'rating'
       | 'favorite'
     >
@@ -789,6 +792,7 @@ type PlayableListColumnName =
   | 'track'
   | 'duration'
   | 'created_at'
+  | 'file_created_at'
   | 'play_count'
   | 'rating'
   | 'favorite'
