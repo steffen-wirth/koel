@@ -45,6 +45,7 @@ RUN cp .env.example .env \
     storage/search-indexes storage/app/public/images \
   && chown -R www-data:www-data /var/www/html
 
+RUN groupadd -g 1000 media && usermod -aG media www-data
 USER www-data
 RUN php artisan package:discover --ansi \
   && php artisan route:cache \
