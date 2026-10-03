@@ -28,11 +28,17 @@ class SongUpdateRequest extends Request
             artistName: $this->input('data.artist_name'),
             albumName: $this->input('data.album_name'),
             albumArtistName: $this->input('data.album_artist_name'),
-            track: (int) $this->input('data.track'),
-            disc: (int) $this->input('data.disc'),
+            track: $this->nullableInt('data.track'),
+            disc: $this->nullableInt('data.disc'),
             genre: $this->input('data.genre'),
-            year: (int) $this->input('data.year'),
+            year: $this->nullableInt('data.year'),
             lyrics: $this->input('data.lyrics'),
         );
+    }
+
+    /** Keep a missing value as null, so it's not mistaken for an explicit 0 (which would overwrite existing data). */
+    private function nullableInt(string $key): ?int
+    {
+        return $this->filled($key) ? (int) $this->input($key) : null;
     }
 }

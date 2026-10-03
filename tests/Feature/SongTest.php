@@ -309,6 +309,31 @@ class SongTest extends TestCase
     }
 
     #[Test]
+    public function multipleUpdateWithOnlyGenreKeepsOtherFields(): void
+    {
+        $songs = Song::factory(2)->create(['disc' => 2, 'year' => 2001, 'track' => 7, 'lyrics' => 'La la']);
+
+        $this->putAs(
+            'api/songs',
+            [
+                'songs' => $songs->pluck('id')->all(),
+                'data' => ['genre' => 'Rock'],
+            ],
+            create_admin(),
+        )->assertOk();
+
+        $songs->each(static function (Song $song): void {
+            $song->refresh();
+
+            self::assertSame('Rock', $song->genre);
+            self::assertSame(2, $song->disc);
+            self::assertSame(2001, $song->year);
+            self::assertSame(7, $song->track);
+            self::assertSame('La la', $song->lyrics);
+        });
+    }
+
+    #[Test]
     public function multipleUpdateCreatingNewAlbumsAndArtists(): void
     {
         $originalSongs = Song::factory()->createMany(2);
