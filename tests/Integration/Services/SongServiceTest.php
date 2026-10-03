@@ -42,6 +42,22 @@ class SongServiceTest extends TestCase
     }
 
     #[Test]
+    public function updateSongWritesChangedTagsToFile(): void
+    {
+        $path = sys_get_temp_dir() . '/' . uniqid('koel-', true) . '.flac';
+        copy(test_path('songs/full-vorbis-comments.flac'), $path);
+        $song = Song::factory()->createOne(['path' => $path, 'title' => 'Amet']);
+
+        $this->service->updateSongs([$song->id], SongUpdateData::make(title: 'Amet', genre: 'Rock'));
+
+        $tags = (string) shell_exec('metaflac --export-tags-to=- ' . escapeshellarg($path));
+        @unlink($path);
+
+        self::assertStringContainsString("GENRE=Rock\n", $tags);
+        self::assertStringContainsString("TITLE=Amet\n", $tags);
+    }
+
+    #[Test]
     public function updateSingleSong(): void
     {
         $song = Song::factory()->createOne();
@@ -326,10 +342,11 @@ class SongServiceTest extends TestCase
         self::assertNotNull($song->file_created_at);
 
         $song->update(['file_created_at' => null]);
-        $song = $this->service->createOrUpdateSongFromScan($info, ScanConfiguration::make(
-            owner: $config->owner,
-            force: true,
-        ), $song);
+        $song = $this->service->createOrUpdateSongFromScan(
+            $info,
+            ScanConfiguration::make(owner: $config->owner, force: true),
+            $song,
+        );
 
         self::assertNull($song->fresh()->file_created_at);
     }

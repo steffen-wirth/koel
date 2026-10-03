@@ -21,7 +21,7 @@ WORKDIR /var/www/html
 
 RUN apt-get update \
   && apt-get install --yes --no-install-recommends \
-    cron libapache2-mod-xsendfile libzip-dev zip ffmpeg locales curl \
+    cron libapache2-mod-xsendfile libzip-dev zip ffmpeg flac locales curl \
     libpng-dev libjpeg62-turbo-dev libpq-dev libwebp-dev libavif-dev nano \
   && docker-php-ext-configure gd --with-jpeg --with-webp --with-avif \
   && docker-php-ext-install bcmath exif gd pdo pdo_mysql pdo_pgsql pgsql zip \

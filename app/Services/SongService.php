@@ -36,6 +36,7 @@ class SongService
         private readonly AlbumService $albumService,
         private readonly ImageStorage $imageStorage,
         private readonly CacheStrategy $cache,
+        private readonly SongTagWriter $tagWriter,
     ) {}
 
     public function updateSongs(array $ids, SongUpdateData $data): SongUpdateResult
@@ -111,6 +112,8 @@ class SongService
     // @mago-ignore lint:halstead
     private function updateSong(Song $song, SongUpdateData $data): Song
     {
+        $originalTags = $this->getFileTags($song);
+
         // For non-nullable fields, if the provided data is empty, use the existing value
         $data->albumName = $data->albumName ?: $song->album->name;
         $data->artistName = $data->artistName ?: $song->artist->name;
@@ -154,7 +157,27 @@ class SongService
             $song->syncGenres($data->genre);
         }
 
-        return $this->songRepository->getOne($song->id);
+        $song = $this->songRepository->getOne($song->id);
+
+        $this->tagWriter->write($song, array_diff_assoc($this->getFileTags($song), $originalTags));
+
+        return $song;
+    }
+
+    /** @return array<string, string|int|null> */
+    private function getFileTags(Song $song): array
+    {
+        return [
+            'title' => $song->title,
+            'artist' => $song->artist_name,
+            'album' => $song->album_name,
+            'album_artist' => $song->album_artist?->name,
+            'track' => $song->track,
+            'disc' => $song->disc,
+            'year' => $song->year,
+            'genre' => $song->genre,
+            'lyrics' => $song->lyrics,
+        ];
     }
 
     public function markSongsAsPublic(EloquentCollection $songs): void
