@@ -767,6 +767,14 @@ interface ToastMessage {
   timeout: number // seconds
 }
 
+type SongFormat = 'flac' | 'mp3'
+
+/** Filters applicable to the song list (and the queue built from it). */
+interface SongFilters {
+  genre: string
+  formats: SongFormat[]
+}
+
 interface Genre {
   type: 'genres'
   id: string

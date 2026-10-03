@@ -298,7 +298,7 @@ export const playableStore = {
     return this.syncWithVault(await http.get<Song[]>(`genres/${id}/songs/queue?${params}`))
   },
 
-  async paginateSongs(params: SongListCursorPaginateParams) {
+  async paginateSongs(params: SongListCursorPaginateParams & Partial<SongFilters>) {
     const query = new URLSearchParams(flattenParams(params))
     query.set('cursor', params.cursor ?? '')
 

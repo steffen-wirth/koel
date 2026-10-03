@@ -16,6 +16,18 @@
         <template #controls>
           <div class="controls w-full flex justify-between items-center gap-4">
             <SongListControls v-if="totalSongCount" :config @play-all="playAll" @play-selected="playSelected" />
+            <Btn
+              v-if="totalSongCount"
+              v-koel-tooltip
+              :class="activeFilterCount && 'text-k-highlight'"
+              class="border border-k-fg-10"
+              title="Filter songs"
+              variant="ghost"
+              @click.prevent="filtersOpen = !filtersOpen"
+            >
+              <Icon :icon="faFilter" />
+              <span v-if="activeFilterCount" class="ml-1.5">{{ activeFilterCount }}</span>
+            </Btn>
           </div>
         </template>
       </ScreenHeader>
@@ -36,15 +48,19 @@
         <template #icon>
           <Icon :icon="faVolumeOff" />
         </template>
-        Your library is empty.
+        {{ activeFilterCount ? 'No songs match the filters.' : 'Your library is empty.' }}
       </ScreenEmptyState>
     </template>
+
+    <SlideInSidebar :open="filtersOpen" title="Filters" @close="filtersOpen = false">
+      <SongFilterPanel v-model="filters" />
+    </SlideInSidebar>
   </ScreenBase>
 </template>
 
 <script lang="ts" setup>
-import { faVolumeOff } from '@fortawesome/free-solid-svg-icons'
-import { computed, onMounted, ref, toRef } from 'vue'
+import { faFilter, faVolumeOff } from '@fortawesome/free-solid-svg-icons'
+import { computed, onMounted, reactive, ref, toRef, watch } from 'vue'
 import { pluralize, secondsToHumanReadable } from '@/utils/formatters'
 import { commonStore } from '@/stores/commonStore'
 import { queueStore } from '@/stores/queueStore'
@@ -60,6 +76,9 @@ import ScreenHeader from '@/components/ui/ScreenHeader.vue'
 import SongListSkeleton from '@/components/playable/playable-list/PlayableListSkeleton.vue'
 import ScreenEmptyState from '@/components/ui/ScreenEmptyState.vue'
 import ScreenBase from '@/components/screens/ScreenBase.vue'
+import Btn from '@/components/ui/form/Btn.vue'
+import SlideInSidebar from '@/components/ui/SlideInSidebar.vue'
+import SongFilterPanel from '@/components/playable/SongFilterPanel.vue'
 
 const totalSongCount = toRef(commonStore.state, 'song_count')
 const totalDuration = computed(() => secondsToHumanReadable(commonStore.state.song_length))
@@ -82,6 +101,9 @@ const { go, url } = useRouter()
 const { get: lsGet, set: lsSet } = useLocalStorage()
 
 const loading = ref(false)
+const filtersOpen = ref(false)
+const filters = reactive<SongFilters>({ genre: '', formats: [] })
+const activeFilterCount = computed(() => (filters.genre ? 1 : 0) + (filters.formats.length ? 1 : 0))
 let sortField: MaybeArray<PlayableListSortField> = lsGet<PlayableListSortField>('all-songs-sort-field', 'title')!
 let sortOrder: SortOrder = lsGet<SortOrder>('all-songs-sort-order', 'asc')!
 
@@ -101,6 +123,8 @@ const fetchSongs = async () => {
       sort: sortField,
       order: sortOrder,
       cursor: cursor.value,
+      genre: filters.genre || undefined,
+      formats: filters.formats,
     })
   } catch (error: any) {
     useErrorHandler().handleHttpError(error)
@@ -111,9 +135,9 @@ const fetchSongs = async () => {
 
 const playAll = async (shuffle: boolean) => {
   if (shuffle) {
-    await queueStore.fetchRandom()
+    await queueStore.fetchRandom(500, filters)
   } else {
-    await queueStore.fetchInOrder(Array.isArray(sortField) ? sortField[0] : sortField, sortOrder)
+    await queueStore.fetchInOrder(Array.isArray(sortField) ? sortField[0] : sortField, sortOrder, 500, filters)
   }
 
   go(url('queue'))
@@ -131,6 +155,15 @@ const sort = async (field: MaybeArray<PlayableListSortField>, order: SortOrder) 
 
   await fetchSongs()
 }
+
+const refetch = async () => {
+  cursor.value = ''
+  playableStore.state.playables = []
+
+  await fetchSongs()
+}
+
+watch(filters, refetch, { deep: true })
 
 onMounted(async () => {
   composableSort(sortField, sortOrder)

@@ -127,4 +127,16 @@ describe('queueStore', () => {
     expect(queueStore.all).toEqual(songs)
     expect(putMock).toHaveBeenCalledWith('queue/state', { songs: songs.map(song => song.id) })
   })
+
+  it('fetches songs to queue with filters', async () => {
+    const getMock = h.mock(http, 'get').mockResolvedValue([h.factory('song').make()])
+    h.mock(playableStore, 'syncWithVault', [])
+    h.mock(http, 'put')
+
+    await queueStore.fetchRandom(3, { genre: 'Rock', formats: ['flac'] })
+    expect(getMock).toHaveBeenLastCalledWith('queue/fetch?order=rand&limit=3&genre=Rock&formats%5B0%5D=flac')
+
+    await queueStore.fetchInOrder('title', 'asc', 3, { genre: '', formats: [] })
+    expect(getMock).toHaveBeenLastCalledWith('queue/fetch?order=asc&sort=title&limit=3')
+  })
 })

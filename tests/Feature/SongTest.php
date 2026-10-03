@@ -38,6 +38,39 @@ class SongTest extends TestCase
     }
 
     #[Test]
+    public function indexFilteredByGenreAndFormat(): void
+    {
+        $rockFlac = Song::factory()->create(['path' => '/music/a.FLAC']);
+        $rockFlac->syncGenres('Rock');
+        $rockMp3 = Song::factory()->create(['path' => '/music/b.mp3']);
+        $rockMp3->syncGenres('Rock');
+        $jazzFlac = Song::factory()->create(['path' => '/music/c.flac']);
+        $jazzFlac->syncGenres('Jazz');
+        Song::factory()->create(['path' => '/music/d.mp3']);
+
+        $ids = static fn ($response) => collect($response->json('data'))->pluck('id')->sort()->values()->all();
+
+        self::assertSame(
+            collect([$rockFlac, $rockMp3])->pluck('id')->sort()->values()->all(),
+            $ids($this->getAs('api/songs?cursor=&genre=Rock')),
+        );
+
+        self::assertSame(
+            collect([$rockFlac, $jazzFlac])->pluck('id')->sort()->values()->all(),
+            $ids($this->getAs('api/songs?cursor=&formats[]=flac')),
+        );
+
+        self::assertCount(4, $this->getAs('api/songs?cursor=&formats[]=flac&formats[]=mp3')->json('data'));
+        self::assertSame([$rockFlac->id], $ids($this->getAs('api/songs?cursor=&genre=Rock&formats[]=flac')));
+    }
+
+    #[Test]
+    public function indexRejectsUnknownFormats(): void
+    {
+        $this->getAs('api/songs?cursor=&formats[]=wav')->assertUnprocessable();
+    }
+
+    #[Test]
     public function indexWithCursorReturnsCursorPagination(): void
     {
         Song::factory()->createMany(51);

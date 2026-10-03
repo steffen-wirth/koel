@@ -108,4 +108,16 @@ class QueueTest extends TestCase
             ->assertJsonStructure([0 => SongResource::JSON_STRUCTURE])
             ->assertJsonCount(5, '*');
     }
+
+    #[Test]
+    public function fetchSongsFilteredByGenreAndFormat(): void
+    {
+        Song::factory()->create(['path' => '/music/a.flac'])->syncGenres('Rock');
+        Song::factory()->create(['path' => '/music/b.mp3'])->syncGenres('Rock');
+        Song::factory()->create(['path' => '/music/c.flac'])->syncGenres('Jazz');
+
+        $this->getAs('api/queue/fetch?order=rand&limit=5&genre=Rock')->assertJsonCount(2, '*');
+        $this->getAs('api/queue/fetch?order=asc&sort=title&limit=5&formats[]=flac')->assertJsonCount(2, '*');
+        $this->getAs('api/queue/fetch?order=asc&sort=title&limit=5&genre=Rock&formats[]=flac')->assertJsonCount(1, '*');
+    }
 }

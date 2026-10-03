@@ -1,10 +1,18 @@
 import { reactive } from 'vue'
 import { differenceBy, unionBy } from 'lodash-es'
-import { arrayify, moveItemsInList } from '@/utils/helpers'
+import { arrayify, flattenParams, moveItemsInList } from '@/utils/helpers'
 import { logger } from '@/utils/logger'
 import { isSong } from '@/utils/typeGuards'
 import { http } from '@/services/http'
 import { playableStore } from '@/stores/playableStore'
+
+const toFilterQuery = (filters: Partial<SongFilters>) => {
+  const query = new URLSearchParams(
+    flattenParams({ genre: filters.genre || undefined, formats: filters.formats }),
+  ).toString()
+
+  return query ? `&${query}` : ''
+}
 
 export const queueStore = {
   state: reactive<{ playables: Playable[] }>({
@@ -151,13 +159,20 @@ export const queueStore = {
     return this.all.find(({ playback_state }) => playback_state !== 'Stopped') || playableStore.findPlaying()
   },
 
-  async fetchRandom(limit = 500) {
-    this.all = await http.get<Song[]>(`queue/fetch?order=rand&limit=${limit}`)
+  async fetchRandom(limit = 500, filters: Partial<SongFilters> = {}) {
+    this.all = await http.get<Song[]>(`queue/fetch?order=rand&limit=${limit}${toFilterQuery(filters)}`)
     return this.all
   },
 
-  async fetchInOrder(sortField: PlayableListSortField, order: SortOrder, limit = 500) {
-    this.all = await http.get<Song[]>(`queue/fetch?order=${order}&sort=${sortField}&limit=${limit}`)
+  async fetchInOrder(
+    sortField: PlayableListSortField,
+    order: SortOrder,
+    limit = 500,
+    filters: Partial<SongFilters> = {},
+  ) {
+    this.all = await http.get<Song[]>(
+      `queue/fetch?order=${order}&sort=${sortField}&limit=${limit}${toFilterQuery(filters)}`,
+    )
     return this.all
   },
 

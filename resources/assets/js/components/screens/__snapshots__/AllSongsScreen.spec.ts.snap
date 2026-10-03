@@ -18,10 +18,16 @@ exports[`allSongsScreen.vue > renders 1`] = `
             <!--v-if-->
           </div>
           <!--v-if-->
-        </div>
+        </div><button data-v-8943c846="" data-v-8ea4eaa5="" data-variant="ghost" class="text-base text-white border border-transparent bg-k-primary px-3.5 py-2 rounded-sm cursor-pointer border border-k-fg-10" type="button" title="Filter songs"><br data-v-8ea4eaa5="" data-testid="Icon" icon="[object Object]">
+          <!--v-if-->
+        </button>
       </div>
     </main>
   </header>
-  <main data-v-dcfb8776="" class="scroll-mask-y overflow-scroll flex flex-col b-16 md:b-6 p-6 flex-1 place-content-start"><br data-v-8ea4eaa5="" data-testid="song-list" class="-m-6"></main>
+  <main data-v-dcfb8776="" class="scroll-mask-y overflow-scroll flex flex-col b-16 md:b-6 p-6 flex-1 place-content-start"><br data-v-8ea4eaa5="" data-testid="song-list" class="-m-6">
+    <transition-stub data-v-33be03a6="" data-v-8ea4eaa5="" name="slide-in" appear="false" persisted="false" css="true">
+      <!--v-if-->
+    </transition-stub>
+  </main>
 </section>
 `;

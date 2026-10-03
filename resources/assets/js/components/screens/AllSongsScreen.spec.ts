@@ -39,6 +39,7 @@ describe('allSongsScreen.vue', () => {
         sort: 'title',
         order: 'asc',
         cursor: '',
+        formats: [],
       }),
     )
 

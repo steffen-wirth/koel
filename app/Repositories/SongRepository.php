@@ -125,10 +125,13 @@ class SongRepository extends Repository implements ScoutableRepository
         string $sortDirection,
         PaginationStrategy $strategy,
         ?User $scopedUser = null,
+        ?string $genre = null,
+        array $formats = [],
     ): Paginator|CursorPaginator {
         return $strategy->apply(
             Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
                 ->withUserContext()
+                ->filterBy($genre, $formats)
                 ->sort($sortColumns, $sortDirection),
             idColumn: 'songs.id',
             perPage: 50,
@@ -165,9 +168,12 @@ class SongRepository extends Repository implements ScoutableRepository
         string $sortDirection,
         int $limit = self::LIST_SIZE_LIMIT,
         ?User $scopedUser = null,
+        ?string $genre = null,
+        array $formats = [],
     ): Collection {
         return Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
             ->withUserContext()
+            ->filterBy($genre, $formats)
             ->sort($sortColumns, $sortDirection)
             ->limit($limit)
             ->get();
@@ -305,10 +311,15 @@ class SongRepository extends Repository implements ScoutableRepository
     }
 
     /** @return Collection<int, Song> */
-    public function getRandom(int $limit, ?User $scopedUser = null): Collection
-    {
+    public function getRandom(
+        int $limit,
+        ?User $scopedUser = null,
+        ?string $genre = null,
+        array $formats = [],
+    ): Collection {
         return Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
             ->withUserContext()
+            ->filterBy($genre, $formats)
             ->inRandomOrder()
             ->limit($limit)
             ->get();

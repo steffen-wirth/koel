@@ -41,7 +41,7 @@ import { computed, onMounted, ref } from 'vue'
 import { genres as standardGenres } from '@/config/genres'
 import { genreStore } from '@/stores/genreStore'
 
-const props = defineProps<{ current?: string | null; clearable?: boolean }>()
+const props = defineProps<{ current?: string | null; clearable?: boolean; libraryOnly?: boolean }>()
 const emit = defineEmits<{ (e: 'select', genre: string): void }>()
 
 const search = ref<HTMLInputElement>()
@@ -49,7 +49,9 @@ const keyword = ref('')
 const libraryGenres = ref<string[]>([])
 
 const matches = computed(() => {
-  const options = Array.from(new Set([...standardGenres, ...libraryGenres.value, props.current].filter(Boolean)))
+  const options = Array.from(
+    new Set([...(props.libraryOnly ? [] : standardGenres), ...libraryGenres.value, props.current].filter(Boolean)),
+  )
     .map(String)
     .sort((a, b) => a.localeCompare(b))
 
