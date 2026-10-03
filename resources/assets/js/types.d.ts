@@ -169,6 +169,8 @@ interface Album {
   created_at: string
   mbid?: string | null
   year: number | null
+  /** Names of the genres of all the album's songs, comma-separated. Only present in the album list. */
+  genre?: string
   length: number
   is_external: boolean
   favorite: boolean
@@ -801,7 +803,7 @@ type PlayableListColumnName =
   | 'playlist_collaborator'
   | 'playlist_added_at'
 
-type AlbumTableColumnName = 'name' | 'artist' | 'time' | 'year' | 'rating' | 'favorite'
+type AlbumTableColumnName = 'name' | 'artist' | 'genre' | 'time' | 'year' | 'rating' | 'favorite'
 
 type ArtistTableColumnName = 'name' | 'rating' | 'favorite'
 

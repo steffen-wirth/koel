@@ -22,12 +22,17 @@ class AlbumController extends Controller
 
     public function index(AlbumListRequest $request)
     {
-        return AlbumResource::collection($this->repository->paginate(
+        $albums = $this->repository->paginate(
             sortColumn: $request->sort ?? 'name',
             sortDirection: $request->order ?? 'asc',
             strategy: PaginationStrategyResolver::resolve($request),
             favoritesOnly: $request->boolean('favorites_only'),
-        ));
+            genre: $request->genre,
+        );
+
+        $this->repository->loadGenres($albums->getCollection());
+
+        return AlbumResource::collection($albums);
     }
 
     public function show(Album $album)

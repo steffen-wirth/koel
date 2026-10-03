@@ -19,6 +19,18 @@
       </a>
       <template v-else>{{ album.artist_name }}</template>
     </span>
+    <span v-if="shouldShowColumn('genre')" class="genre">
+      <GenrePickerPopover
+        v-if="allowEdit"
+        :current="singleGenre"
+        title="Set the genre of all songs in this album"
+        clearable
+        @select="setGenre"
+      >
+        {{ album.genre || '—' }}
+      </GenrePickerPopover>
+      <template v-else>{{ album.genre || '—' }}</template>
+    </span>
     <span v-if="shouldShowColumn('time')" class="time text-k-fg-50 tabular-nums">
       {{ formatLength(album.length) }}
     </span>
@@ -39,11 +51,14 @@
 
 <script lang="ts" setup>
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons'
+import { computed } from 'vue'
 import { artistStore } from '@/stores/artistStore'
 import { useDraggable } from '@/composables/useDragAndDrop'
 import { useRouter } from '@/composables/useRouter'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTableColumnVisibility } from '@/composables/useTableColumnVisibility'
+import { useAlbumGenre } from '@/composables/useAlbumGenre'
+import { usePolicies } from '@/composables/usePolicies'
 import { albumTableColumnConfig } from '@/config/tables'
 import { secondsToHis } from '@/utils/formatters'
 import { defineAsyncComponent } from '@/utils/helpers'
@@ -51,6 +66,7 @@ import { defineAsyncComponent } from '@/utils/helpers'
 import StarRating from '@/components/ui/StarRating.vue'
 import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 import AlbumOrArtistThumbnail from '@/components/ui/album-artist/AlbumOrArtistThumbnail.vue'
+import GenrePickerPopover from '@/components/genre/GenrePickerPopover.vue'
 
 const props = defineProps<{ album: Album }>()
 
@@ -64,6 +80,13 @@ const { go, url } = useRouter()
 const { openContextMenu } = useContextMenu()
 const { startDragging } = useDraggable('album')
 const { shouldShowColumn } = useTableColumnVisibility(albumTableColumnConfig)
+const { currentUserCan } = usePolicies()
+const { setAlbumGenre } = useAlbumGenre()
+
+const allowEdit = computed(() => currentUserCan.editAlbum(props.album))
+// Only a single, shared genre can be highlighted as the current one in the picker.
+const singleGenre = computed(() => (props.album.genre?.includes(',') ? null : props.album.genre))
+const setGenre = (genre: string) => setAlbumGenre(props.album, genre)
 
 const formatLength = (seconds: number) => (seconds > 0 ? secondsToHis(seconds) : '—')
 
@@ -85,6 +108,10 @@ const onDragStart = (event: DragEvent) => startDragging(event, props.album)
 
   &.artist {
     @apply basis-48;
+  }
+
+  &.genre {
+    @apply basis-40;
   }
 
   &.time {

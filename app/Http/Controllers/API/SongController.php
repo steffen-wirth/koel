@@ -55,6 +55,7 @@ class SongController extends Controller
 
         $result = $this->songService->updateSongs($request->songs, $request->toDto());
         $albums = $this->albumRepository->getMany($result->updatedSongs->pluck('album_id')->toArray());
+        $this->albumRepository->loadGenres($albums);
 
         $artists = $this->artistRepository->getMany(array_merge(
             $result->updatedSongs->pluck('artist_id')->all(),

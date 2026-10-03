@@ -18,6 +18,8 @@
               />
             </Btn>
 
+            <AlbumGenreFilter v-model="genreFilter" @update:model-value="applyGenreFilter" />
+
             <AlbumListSorter
               v-if="preferences.albums_view_mode !== 'table'"
               :field="preferences.albums_sort_field"
@@ -37,6 +39,13 @@
       </template>
       No albums found.
       <EmptyLibraryHint />
+    </ScreenEmptyState>
+
+    <ScreenEmptyState v-else-if="noAlbumsInGenre">
+      <template #icon>
+        <Icon :icon="faCompactDisc" />
+      </template>
+      No albums in this genre.
     </ScreenEmptyState>
 
     <ScreenEmptyState v-else-if="noFavoriteAlbums">
@@ -106,6 +115,7 @@ import ViewModeSwitch from '@/components/ui/ViewModeSwitch.vue'
 import ScreenEmptyState from '@/components/ui/ScreenEmptyState.vue'
 import ScreenBase from '@/components/screens/ScreenBase.vue'
 import AlbumListSorter from '@/components/album/AlbumListSorter.vue'
+import AlbumGenreFilter from '@/components/album/AlbumGenreFilter.vue'
 import Btn from '@/components/ui/form/Btn.vue'
 import EmptyLibraryHint from '@/components/ui/EmptyLibraryHint.vue'
 
@@ -113,6 +123,7 @@ const grid = ref<InstanceType<typeof AlbumGrid>>()
 const albums = toRef(albumStore.state, 'albums')
 
 const loading = ref(false)
+const genreFilter = ref('')
 const cursor = ref<string | null>('')
 
 const libraryEmpty = computed(() => commonStore.state.song_length === 0)
@@ -128,6 +139,9 @@ const noFavoriteAlbums = computed(
     displayedAlbums.value.length === 0 &&
     !moreAlbumsAvailable.value,
 )
+const noAlbumsInGenre = computed(
+  () => !loading.value && Boolean(genreFilter.value) && albums.value.length === 0 && !moreAlbumsAvailable.value,
+)
 const moreAlbumsAvailable = computed(() => cursor.value !== null)
 const showSkeletons = computed(() => loading.value && albums.value.length === 0)
 
@@ -141,6 +155,7 @@ const fetchAlbums = async () => {
   try {
     cursor.value = await albumStore.paginate({
       favorites_only: preferences.albums_favorites_only,
+      genre: genreFilter.value || undefined,
       cursor: cursor.value,
       sort: preferences.albums_sort_field,
       order: preferences.albums_sort_order,
@@ -163,6 +178,12 @@ const sort = async (field: AlbumListSortField, order: SortOrder) => {
   preferences.albums_sort_field = field
   preferences.albums_sort_order = order
 
+  await resetState()
+  await nextTick()
+  await fetchAlbums()
+}
+
+const applyGenreFilter = async () => {
   await resetState()
   await nextTick()
   await fetchAlbums()

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 
 /**
@@ -237,15 +238,45 @@ class AlbumRepository extends Repository implements ScoutableRepository
         PaginationStrategy $strategy,
         bool $favoritesOnly = false,
         ?User $user = null,
+        ?string $genre = null,
     ): Paginator|CursorPaginator {
         return $strategy->apply(
             Album::query()
                 ->onlyStandard()
                 ->withUserContext(user: $user ?? $this->auth->user(), favoritesOnly: $favoritesOnly)
+                ->when($genre, static fn (Builder $query) => $query->whereHas('songs.genres', static fn (Builder $genres) => $genres->where(
+                    'genres.name',
+                    $genre,
+                )))
                 ->sort($sortColumn, $sortDirection),
             idColumn: 'albums.id',
             perPage: 21,
         );
+    }
+
+    /**
+     * Set the `genre` attribute of the given albums to the (comma-separated) names of all the genres of their songs,
+     * using a single query regardless of the number of albums.
+     *
+     * @param iterable<Album> $albums
+     */
+    public function loadGenres(iterable $albums): void
+    {
+        $albums = collect($albums);
+
+        $genres = DB::table('genre_song')
+            ->join('genres', 'genres.id', 'genre_song.genre_id')
+            ->join('songs', 'songs.id', 'genre_song.song_id')
+            ->whereIn('songs.album_id', $albums->pluck('id'))
+            ->distinct()
+            ->orderBy('genres.name')
+            ->get(['songs.album_id', 'genres.name'])
+            ->groupBy('album_id');
+
+        $albums->each(static fn (Album $album) => $album->setAttribute(
+            'genre',
+            $genres->get($album->id, collect())->pluck('name')->join(', '),
+        ));
     }
 
     public function search(string $keywords, int $limit, ?User $user = null): Collection

@@ -57,7 +57,10 @@
         </span>
       </template>
       <template v-if="isSong(playable)">
-        <span v-if="shouldShowColumn('genre')" class="genre">{{ playable.genre || '—' }}</span>
+        <span v-if="shouldShowColumn('genre')" class="genre">
+          <PlayableListGenreSelect v-if="canEdit" :song="playable" />
+          <template v-else>{{ playable.genre || '—' }}</template>
+        </span>
         <span v-if="shouldShowColumn('year')" class="year">{{ playable.year || '—' }}</span>
         <span v-if="shouldShowColumn('file_created_at')" class="file-created">
           {{ playable.file_created_at ? new Date(playable.file_created_at).toLocaleDateString() : '—' }}
@@ -93,6 +96,7 @@ import { isSong } from '@/utils/typeGuards'
 import { secondsToHis } from '@/utils/formatters'
 import { useTableColumnVisibility } from '@/composables/useTableColumnVisibility'
 import { useOfflinePlayback } from '@/composables/useOfflinePlayback'
+import { usePolicies } from '@/composables/usePolicies'
 import { PlayableListConfigKey } from '@/config/symbols'
 import { playableListColumnConfig } from '@/config/tables'
 import { playableStore } from '@/stores/playableStore'
@@ -104,6 +108,7 @@ import ExternalMark from '@/components/ui/ExternalMark.vue'
 import OfflineMark from '@/components/ui/OfflineMark.vue'
 import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 import StarRating from '@/components/ui/StarRating.vue'
+import PlayableListGenreSelect from '@/components/playable/playable-list/PlayableListGenreSelect.vue'
 
 const props = withDefaults(defineProps<{ item: PlayableRow; showDisc?: boolean }>(), {
   showDisc: false,
@@ -118,10 +123,13 @@ const [config] = requireInjection<[Partial<PlayableListConfig>]>(PlayableListCon
 
 const { shouldShowColumn } = useTableColumnVisibility(playableListColumnConfig)
 
+const { currentUserCan } = usePolicies()
+
 const { item } = toRefs(props)
 
 const playable = computed<Playable>(() => item.value.playable)
 const playing = computed(() => ['Playing', 'Paused'].includes(playable.value.playback_state!))
+const canEdit = computed(() => isSong(playable.value) && currentUserCan.editSong(playable.value))
 const external = computed(() => isSong(playable.value) && playable.value.is_external)
 const { isCached, isCaching, hasCachingError, getCachingError } = useOfflinePlayback()
 const cachedOffline = computed(() => isSong(playable.value) && isCached(playable.value))

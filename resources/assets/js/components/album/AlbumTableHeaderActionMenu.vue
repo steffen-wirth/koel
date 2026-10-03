@@ -10,7 +10,7 @@
           :key="item.label"
           :class="field === item.field && 'active'"
           class="cursor-pointer group flex justify-between pl-3! hover:bg-k-highlight! hover:text-k-highlight-fg!"
-          @click="sort(item.field)"
+          @click="item.field && sort(item.field)"
         >
           <label class="w-4 mr-2.5 flex items-center" @click.stop="toggle(item.column)">
             <input
@@ -50,7 +50,7 @@ const emit = defineEmits<{ (e: 'sort', field: AlbumListSortField): void }>()
 interface MenuItem {
   column: AlbumTableColumnName
   label: string
-  field: AlbumListSortField
+  field?: AlbumListSortField
 }
 
 const { shouldShowColumn, toggleColumn, isToggleable } = useTableColumnVisibility(albumTableColumnConfig)
@@ -61,6 +61,7 @@ const popover = ref<InstanceType<typeof Popover>>()
 const menuItems = computed<MenuItem[]>(() => [
   { column: 'name', label: 'Name', field: 'name' },
   { column: 'artist', label: 'Artist', field: 'artist_name' },
+  { column: 'genre', label: 'Genre' },
   { column: 'time', label: 'Time', field: 'length' },
   { column: 'year', label: 'Year', field: 'year' },
   { column: 'rating', label: 'Rating', field: 'rating' },

@@ -15,6 +15,7 @@
     <Separator />
     <template v-if="allowEdit">
       <MenuItem @click="edit">Edit…</MenuItem>
+      <MenuItem @click="setGenre">Set Genre for All Songs…</MenuItem>
     </template>
     <Separator />
     <template v-if="isStandardAlbum && allowDownload">
@@ -58,6 +59,7 @@ const props = defineProps<{ album: Album }>()
 const { album } = toRefs(props)
 
 const EditAlbumForm = defineAsyncComponent(() => import('@/components/album/EditAlbumForm.vue'))
+const SetAlbumGenreForm = defineAsyncComponent(() => import('@/components/album/SetAlbumGenreForm.vue'))
 const CreateEmbedForm = defineAsyncComponent(() => import('@/components/embed/CreateEmbedForm.vue'))
 
 const { go, url } = useRouter()
@@ -92,6 +94,7 @@ const shuffle = () =>
   })
 
 const edit = () => trigger(() => openModal<'EDIT_ALBUM_FORM'>(EditAlbumForm, { album: album.value }))
+const setGenre = () => trigger(() => openModal<'SET_ALBUM_GENRE_FORM'>(SetAlbumGenreForm, { album: album.value }))
 const toggleFavorite = () => trigger(() => albumStore.toggleFavorite(album.value))
 const { fromAlbum } = useDownload()
 const download = () => trigger(() => fromAlbum(album.value))

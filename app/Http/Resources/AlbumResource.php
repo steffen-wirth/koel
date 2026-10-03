@@ -99,6 +99,11 @@ class AlbumResource extends JsonResource
             'created_at' => $this->unless($embedding, $this->album->created_at),
             'mbid' => $this->when($musicBrainzEnabled && !$embedding, $this->album->mbid),
             'year' => $this->album->year,
+            // Only present when the genres have been loaded by the endpoint.
+            'genre' => $this->when(
+                array_key_exists('genre', $this->album->getAttributes()),
+                fn () => $this->album->getAttribute('genre'),
+            ),
             'is_external' => $this->unless($embedding, fn () => $isPlus && $this->album->user_id !== $user->id),
             'favorite' => $this->unless($embedding, $this->album->favorite),
             'length' => $this->unless($embedding, fn () => (float) ($this->album->length ?? 0)),

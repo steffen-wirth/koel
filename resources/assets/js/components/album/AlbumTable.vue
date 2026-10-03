@@ -26,6 +26,7 @@
         <Icon v-if="field === 'artist_name' && order === 'asc'" :icon="faCaretUp" class="ml-2 text-k-highlight" />
         <Icon v-if="field === 'artist_name' && order === 'desc'" :icon="faCaretDown" class="ml-2 text-k-highlight" />
       </span>
+      <span v-if="shouldShowColumn('genre')" class="genre">Genre</span>
       <span
         v-if="shouldShowColumn('time')"
         class="time"
@@ -134,6 +135,10 @@ const onSort = (clicked: AlbumListSortField) => {
 
     &.artist {
       @apply basis-48;
+    }
+
+    &.genre {
+      @apply basis-40;
     }
 
     &.time {

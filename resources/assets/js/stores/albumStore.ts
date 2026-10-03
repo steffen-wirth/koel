@@ -18,6 +18,7 @@ export interface AlbumUpdateData {
 
 interface AlbumListPaginateParams extends CursorPaginateParams<AlbumListSortField> {
   favorites_only: boolean
+  genre?: string
 }
 
 export const albumStore = {

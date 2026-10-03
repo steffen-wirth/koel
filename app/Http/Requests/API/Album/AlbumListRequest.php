@@ -8,6 +8,7 @@ use App\Http\Requests\API\Request;
  * @property-read string $order
  * @property-read string $sort
  * @property-read ?string $cursor
+ * @property-read ?string $genre
  */
 class AlbumListRequest extends Request
 {
@@ -18,6 +19,7 @@ class AlbumListRequest extends Request
             'sort' => ['sometimes', 'string'],
             'order' => ['sometimes', 'in:asc,desc'],
             'cursor' => ['sometimes', 'nullable', 'string'],
+            'genre' => ['sometimes', 'nullable', 'string'],
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Helpers\Ulid;
 use App\Http\Resources\AlbumResource;
 use App\Models\Album;
+use App\Models\Song;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -41,6 +42,34 @@ class AlbumTest extends TestCase
         $this->getAs(
             'api/albums?sort=rating&order=desc',
         )->assertJsonStructure(AlbumResource::PAGINATION_JSON_STRUCTURE);
+    }
+
+    #[Test]
+    public function indexIncludesAlbumGenres(): void
+    {
+        $album = Album::factory()->create();
+        Song::factory()->for($album)->create()->syncGenres('Rock, Blues');
+        Song::factory()->for($album)->create()->syncGenres('Rock');
+        $noGenreAlbum = Album::factory()->create();
+        Song::factory()->for($noGenreAlbum)->create();
+
+        $response = $this->getAs('api/albums?cursor=');
+
+        self::assertSame('Blues, Rock', collect($response->json('data'))->firstWhere('id', $album->id)['genre']);
+        self::assertSame('', collect($response->json('data'))->firstWhere('id', $noGenreAlbum->id)['genre']);
+    }
+
+    #[Test]
+    public function indexFilteredByGenre(): void
+    {
+        $rock = Album::factory()->create();
+        Song::factory()->for($rock)->create()->syncGenres('Rock');
+        $jazz = Album::factory()->create();
+        Song::factory()->for($jazz)->create()->syncGenres('Jazz');
+
+        $ids = collect($this->getAs('api/albums?cursor=&genre=Rock')->json('data'))->pluck('id');
+
+        self::assertSame([$rock->id], $ids->all());
     }
 
     #[Test]
