@@ -8,7 +8,7 @@ export interface Modals {
   CREATE_PLAYLIST_FOLDER_FORM: { parent: PlaylistFolder | null }
   CREATE_SMART_PLAYLIST_FORM: { folder: PlaylistFolder | null }
   EDIT_ALBUM_FORM: { album: Album }
-  SET_ALBUM_GENRE_FORM: { album: Album }
+  SET_ALBUM_GENRE_FORM: { album: Album; suggest?: boolean }
   EDIT_ARTIST_FORM: { artist: Artist }
   EDIT_PLAYLIST_FORM: { playlist: Playlist }
   EDIT_PLAYLIST_FOLDER_FORM: { folder: PlaylistFolder }

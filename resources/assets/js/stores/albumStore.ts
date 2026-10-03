@@ -6,6 +6,7 @@ import { http } from '@/services/http'
 import { flattenParams } from '@/utils/helpers'
 import { logger } from '@/utils/logger'
 import { useVault } from '@/composables/useVault'
+import type { SongUpdateResult } from '@/stores/playableStore'
 import { playableStore as songStore } from '@/stores/playableStore'
 
 const UNKNOWN_ALBUM_NAME = 'Unknown Album'
@@ -86,6 +87,22 @@ export const albumStore = {
     this.state.albums = unionBy(this.state.albums, this.syncWithVault(resource.data), 'id')
 
     return resource.meta.next_cursor
+  },
+
+  async fetchGenreSuggestions(album: Album) {
+    return (await http.get<{ genres: string[] }>(`albums/${album.id}/genre-suggestions`)).genres
+  },
+
+  /**
+   * Add genres to all the songs of an album, keeping the genres they already have.
+   */
+  async addGenres(album: Album, genres: string[]) {
+    const result = await http.post<SongUpdateResult>(`albums/${album.id}/genres`, { genres })
+
+    songStore.syncWithVault(result.songs)
+    this.syncWithVault(result.albums)
+
+    return result
   },
 
   async fetchForArtist(artist: Artist | Artist['id']) {

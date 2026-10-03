@@ -1,3 +1,4 @@
+import { albumStore } from '@/stores/albumStore'
 import { playableStore } from '@/stores/playableStore'
 import { useDialogBox } from '@/composables/useDialogBox'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -39,5 +40,32 @@ export const useAlbumGenre = () => {
     }
   }
 
-  return { setAlbumGenre }
+  /** Fetch the genres MusicBrainz suggests for an album. Resolves to an empty list upon errors. */
+  const fetchSuggestions = async (album: Album) => {
+    try {
+      return await albumStore.fetchGenreSuggestions(album)
+    } catch (error: unknown) {
+      handleHttpError(error)
+
+      return []
+    }
+  }
+
+  /** Add genres to all the songs of an album, keeping their existing genres. Resolves to whether it succeeded. */
+  const addGenres = async (album: Album, genres: string[]) => {
+    try {
+      const result = await albumStore.addGenres(album, genres)
+
+      toastSuccess(`Added ${genres.join(', ')} to ${pluralize(result.songs, 'song')}.`)
+      eventBus.emit('SONGS_UPDATED', result)
+
+      return true
+    } catch (error: unknown) {
+      handleHttpError(error)
+
+      return false
+    }
+  }
+
+  return { setAlbumGenre, fetchSuggestions, addGenres }
 }

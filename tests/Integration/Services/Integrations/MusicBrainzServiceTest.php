@@ -7,6 +7,7 @@ use App\Models\Artist;
 use App\Pipelines\Encyclopedia\GetAlbumTracksUsingMbid;
 use App\Pipelines\Encyclopedia\GetAlbumWikidataIdUsingReleaseGroupMbid;
 use App\Pipelines\Encyclopedia\GetArtistWikidataIdUsingMbid;
+use App\Pipelines\Encyclopedia\GetGenresUsingReleaseGroupMbid;
 use App\Pipelines\Encyclopedia\GetMbidForArtist;
 use App\Pipelines\Encyclopedia\GetReleaseAndReleaseGroupMbidsForAlbum;
 use App\Pipelines\Encyclopedia\GetReleaseGroupMbidUsingReleaseMbid;
@@ -93,6 +94,39 @@ class MusicBrainzServiceTest extends TestCase
         $artist = Artist::factory()->createOne(['name' => 'Skid Row']);
 
         self::assertNull($this->service->getArtistInformation($artist));
+    }
+
+    #[Test]
+    public function getAlbumGenres(): void
+    {
+        $this->mockPipelinePipe(
+            GetReleaseAndReleaseGroupMbidsForAlbum::class,
+            ['album' => 'Slave to the Grind', 'artist' => 'Skid Row'],
+            ['sample-album-mbid', 'sample-release-group-mbid'],
+        );
+        $this->mockPipelinePipe(GetGenresUsingReleaseGroupMbid::class, 'sample-release-group-mbid', ['Rock', 'Metal']);
+
+        $album = Album::factory()->for(Artist::factory()->createOne(['name' => 'Skid Row']))->createOne([
+            'name' => 'Slave to the Grind',
+        ]);
+
+        self::assertSame(['Rock', 'Metal'], $this->service->getAlbumGenres($album));
+    }
+
+    #[Test]
+    public function getAlbumGenresReturnsEmptyUponAnyError(): void
+    {
+        $this->mockPipelinePipe(
+            GetReleaseAndReleaseGroupMbidsForAlbum::class,
+            ['album' => 'Slave to the Grind', 'artist' => 'Skid Row'],
+            new Exception('Something went wrong'),
+        );
+
+        $album = Album::factory()->for(Artist::factory()->createOne(['name' => 'Skid Row']))->createOne([
+            'name' => 'Slave to the Grind',
+        ]);
+
+        self::assertSame([], $this->service->getAlbumGenres($album));
     }
 
     #[Test]

@@ -20,14 +20,11 @@
       <template v-else>{{ album.artist_name }}</template>
     </span>
     <span v-if="shouldShowColumn('genre')" class="genre">
-      <GenrePickerPopover
-        v-if="allowEdit"
-        :current="singleGenre"
-        title="Set the genre of all songs in this album"
-        clearable
-        @select="setGenre"
-      >
+      <GenrePickerPopover v-if="allowEdit" title="Set the genre of all songs in this album">
         {{ album.genre || '—' }}
+        <template #picker="{ close }">
+          <AlbumGenrePicker :album :current="singleGenre" @done="close" />
+        </template>
       </GenrePickerPopover>
       <template v-else>{{ album.genre || '—' }}</template>
     </span>
@@ -57,7 +54,6 @@ import { useDraggable } from '@/composables/useDragAndDrop'
 import { useRouter } from '@/composables/useRouter'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTableColumnVisibility } from '@/composables/useTableColumnVisibility'
-import { useAlbumGenre } from '@/composables/useAlbumGenre'
 import { usePolicies } from '@/composables/usePolicies'
 import { albumTableColumnConfig } from '@/config/tables'
 import { secondsToHis } from '@/utils/formatters'
@@ -67,6 +63,7 @@ import StarRating from '@/components/ui/StarRating.vue'
 import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 import AlbumOrArtistThumbnail from '@/components/ui/album-artist/AlbumOrArtistThumbnail.vue'
 import GenrePickerPopover from '@/components/genre/GenrePickerPopover.vue'
+import AlbumGenrePicker from '@/components/album/AlbumGenrePicker.vue'
 
 const props = defineProps<{ album: Album }>()
 
@@ -81,12 +78,10 @@ const { openContextMenu } = useContextMenu()
 const { startDragging } = useDraggable('album')
 const { shouldShowColumn } = useTableColumnVisibility(albumTableColumnConfig)
 const { currentUserCan } = usePolicies()
-const { setAlbumGenre } = useAlbumGenre()
 
 const allowEdit = computed(() => currentUserCan.editAlbum(props.album))
 // Only a single, shared genre can be highlighted as the current one in the picker.
 const singleGenre = computed(() => (props.album.genre?.includes(',') ? null : props.album.genre))
-const setGenre = (genre: string) => setAlbumGenre(props.album, genre)
 
 const formatLength = (seconds: number) => (seconds > 0 ? secondsToHis(seconds) : '—')
 

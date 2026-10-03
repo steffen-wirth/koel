@@ -16,6 +16,7 @@
     <template v-if="allowEdit">
       <MenuItem @click="edit">Edit…</MenuItem>
       <MenuItem @click="setGenre">Set Genre for All Songs…</MenuItem>
+      <MenuItem @click="suggestGenres">Suggest Genres…</MenuItem>
     </template>
     <Separator />
     <template v-if="isStandardAlbum && allowDownload">
@@ -95,6 +96,8 @@ const shuffle = () =>
 
 const edit = () => trigger(() => openModal<'EDIT_ALBUM_FORM'>(EditAlbumForm, { album: album.value }))
 const setGenre = () => trigger(() => openModal<'SET_ALBUM_GENRE_FORM'>(SetAlbumGenreForm, { album: album.value }))
+const suggestGenres = () =>
+  trigger(() => openModal<'SET_ALBUM_GENRE_FORM'>(SetAlbumGenreForm, { album: album.value, suggest: true }))
 const toggleFavorite = () => trigger(() => albumStore.toggleFavorite(album.value))
 const { fromAlbum } = useDownload()
 const download = () => trigger(() => fromAlbum(album.value))

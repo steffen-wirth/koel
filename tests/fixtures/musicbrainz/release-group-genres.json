@@ -1,0 +1,10 @@
+{
+  "id": "sample-mbid",
+  "title": "Slave to the Grind",
+  "genres": [
+    { "id": "1", "name": "hard rock", "count": 3, "disambiguation": "" },
+    { "id": "2", "name": "heavy metal", "count": 7, "disambiguation": "" },
+    { "id": "3", "name": "glam metal", "count": 1, "disambiguation": "" },
+    { "id": "4", "name": "rock", "count": 5, "disambiguation": "" }
+  ]
+}

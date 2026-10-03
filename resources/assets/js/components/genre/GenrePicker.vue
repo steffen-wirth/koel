@@ -32,6 +32,7 @@
         Clear genre
       </li>
     </menu>
+    <slot name="footer" />
   </div>
 </template>
 

@@ -11,7 +11,9 @@
       <slot>{{ current || '—' }}</slot>
     </button>
     <Popover ref="popover" :anchor="button" placement="bottom-start" class="context-menu" @toggle="open = $event">
-      <GenrePicker v-if="open" :current :clearable @select="onSelect" />
+      <slot v-if="open" name="picker" :close="() => popover?.hide()">
+        <GenrePicker :current :clearable @select="onSelect" />
+      </slot>
     </Popover>
   </span>
 </template>

@@ -7,6 +7,7 @@ use App\Models\Artist;
 use App\Pipelines\Encyclopedia\GetAlbumTracksUsingMbid;
 use App\Pipelines\Encyclopedia\GetAlbumWikidataIdUsingReleaseGroupMbid;
 use App\Pipelines\Encyclopedia\GetArtistWikidataIdUsingMbid;
+use App\Pipelines\Encyclopedia\GetGenresUsingReleaseGroupMbid;
 use App\Pipelines\Encyclopedia\GetMbidForArtist;
 use App\Pipelines\Encyclopedia\GetReleaseAndReleaseGroupMbidsForAlbum;
 use App\Pipelines\Encyclopedia\GetReleaseGroupMbidUsingReleaseMbid;
@@ -103,5 +104,31 @@ class MusicBrainzService implements Encyclopedia
                     $tracks,
                 );
         });
+    }
+
+    /**
+     * The most voted MusicBrainz genres of an album's release group.
+     *
+     * @return list<string>
+     */
+    public function getAlbumGenres(Album $album): array
+    {
+        if ($album->is_unknown || $album->artist->is_unknown) {
+            return [];
+        }
+
+        return (
+            rescue_if(
+                static::enabled(),
+                static function () use ($album): array {
+                    [, $releaseGroupMbid] = self::resolveReleaseMbids($album);
+
+                    return Pipeline::send($releaseGroupMbid)
+                        ->through([GetGenresUsingReleaseGroupMbid::class])
+                        ->thenReturn();
+                },
+                [],
+            ) ?? []
+        );
     }
 }

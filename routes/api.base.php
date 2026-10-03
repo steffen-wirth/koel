@@ -5,6 +5,7 @@ use App\Helpers\Uuid;
 use App\Http\Controllers\API\ActivateLicenseController;
 use App\Http\Controllers\API\AiController;
 use App\Http\Controllers\API\AlbumController;
+use App\Http\Controllers\API\AlbumGenreController;
 use App\Http\Controllers\API\AlbumSongController;
 use App\Http\Controllers\API\Artist\ArtistAlbumController;
 use App\Http\Controllers\API\Artist\ArtistController;
@@ -266,6 +267,8 @@ Route::prefix('api')
 
             // Media information routes
             Route::get('albums/{album}/information', FetchAlbumInformationController::class);
+            Route::get('albums/{album}/genre-suggestions', [AlbumGenreController::class, 'suggest']);
+            Route::post('albums/{album}/genres', [AlbumGenreController::class, 'store']);
             Route::get('artists/{artist}/information', FetchArtistInformationController::class);
 
             // Events (shows) routes
