@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\SmartPlaylistRulesCast;
+use App\Casts\SmartPlaylistSelectionCast;
 use App\Models\Concerns\MorphsToEmbeds;
 use App\Models\Concerns\Playlists\ManagesCollaborators;
 use App\Models\Concerns\Playlists\ManagesPlayables;
@@ -10,6 +11,7 @@ use App\Models\Contracts\Embeddable;
 use App\Models\Song as Playable;
 use App\Observers\PlaylistObserver;
 use App\Values\SmartPlaylist\SmartPlaylistRuleGroupCollection;
+use App\Values\SmartPlaylist\SmartPlaylistSelection;
 use Carbon\Carbon;
 use Database\Factories\PlaylistFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
@@ -36,6 +38,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
  * @property User $owner
  * @property ?SmartPlaylistRuleGroupCollection $rule_groups
  * @property ?SmartPlaylistRuleGroupCollection $rules
+ * @property ?SmartPlaylistSelection $selection
  * @property Carbon $created_at
  * @property EloquentCollection<array-key, Playable> $playables
  * @property EloquentCollection<array-key, User> $users
@@ -64,6 +67,7 @@ class Playlist extends Model implements AuditableContract, Embeddable
     {
         return [
             'rules' => SmartPlaylistRulesCast::class,
+            'selection' => SmartPlaylistSelectionCast::class,
         ];
     }
 
@@ -105,7 +109,9 @@ class Playlist extends Model implements AuditableContract, Embeddable
 
     protected function isSmart(): Attribute
     {
-        return Attribute::get(fn (): bool => (bool) $this->rule_groups?->isNotEmpty())->shouldCache();
+        return Attribute::get(
+            fn (): bool => (bool) ($this->rule_groups?->isNotEmpty() || $this->selection),
+        )->shouldCache();
     }
 
     protected function ruleGroups(): Attribute

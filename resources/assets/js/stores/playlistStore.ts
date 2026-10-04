@@ -17,12 +17,14 @@ interface CreatePlaylistRequestData {
   folder_id: PlaylistFolder['id'] | null
   folder_name?: string | null
   rules?: SmartPlaylistRuleGroup[]
+  selection?: SmartPlaylistSelection | null
 }
 
 export type CreatePlaylistData = Pick<Playlist, 'name' | 'description' | 'folder_id' | 'cover'> & {
   folder_name?: string | null
   songs?: Playable['id'][]
   rules?: SmartPlaylistRuleGroup[]
+  selection?: SmartPlaylistSelection | null
 }
 
 export interface UpdatePlaylistData {
@@ -32,6 +34,7 @@ export interface UpdatePlaylistData {
   folder_name?: string | null
   cover?: string | null
   rules?: SmartPlaylistRuleGroup[]
+  selection?: SmartPlaylistSelection | null
 }
 
 export const playlistStore = {
@@ -58,6 +61,9 @@ export const playlistStore = {
    * Set up a smart playlist by properly construct its structure from serialized database values.
    */
   setupSmartPlaylist: (playlist: Playlist) => {
+    // A smart playlist that only has a selection comes without any rule groups.
+    playlist.rules ??= []
+
     playlist.rules.forEach(group => {
       group.rules.forEach(rule => {
         const serializedRule = rule as unknown as SerializedSmartPlaylistRule
@@ -83,7 +89,7 @@ export const playlistStore = {
 
   async store(data: CreatePlaylistData, songs: Playable[] = []) {
     const requestData: CreatePlaylistRequestData = {
-      ...pick(data, 'name', 'description', 'folder_id', 'folder_name', 'cover'),
+      ...pick(data, 'name', 'description', 'folder_id', 'folder_name', 'cover', 'selection'),
       songs: songs.map(song => song.id),
     }
 

@@ -289,6 +289,55 @@ class PlaylistTest extends TestCase
     }
 
     #[Test]
+    public function creatingSmartPlaylistFromASelectionOnly(): void
+    {
+        $this
+            ->postAs(
+                'api/playlists',
+                [
+                    'name' => 'Fast Rock',
+                    'selection' => [
+                        'genre' => 'Rock',
+                        'bpm_min' => 120,
+                        'bpm_max' => '',
+                        'max_songs' => 25,
+                        'randomize' => true,
+                    ],
+                ],
+                create_user(),
+            )
+            ->assertJsonPath('is_smart', true)
+            ->assertJsonPath('selection.genre', 'Rock')
+            ->assertJsonPath('selection.bpm_min', 120)
+            ->assertJsonPath('selection.bpm_max', null)
+            ->assertJsonPath('selection.max_songs', 25)
+            ->assertJsonPath('selection.randomize', true);
+    }
+
+    #[Test]
+    public function creatingPlaylistWithEmptySelectionIsNotSmart(): void
+    {
+        $this
+            ->postAs(
+                'api/playlists',
+                ['name' => 'Plain', 'selection' => ['genre' => '', 'randomize' => false]],
+                create_user(),
+            )
+            ->assertJsonPath('is_smart', false)
+            ->assertJsonPath('selection', null);
+    }
+
+    #[Test]
+    public function selectionIsValidated(): void
+    {
+        $this->postAs(
+            'api/playlists',
+            ['name' => 'X', 'selection' => ['max_songs' => 0, 'bpm_min' => -1]],
+            create_user(),
+        )->assertJsonValidationErrors(['selection.max_songs', 'selection.bpm_min']);
+    }
+
+    #[Test]
     public function creatingSmartPlaylistFailsIfSongsProvided(): void
     {
         $this->postAs('api/playlists', [

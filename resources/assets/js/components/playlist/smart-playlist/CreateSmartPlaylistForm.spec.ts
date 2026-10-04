@@ -110,4 +110,39 @@ describe('createSmartPlaylistForm', () => {
 
     expect(emitted().close).toBeTruthy()
   })
+
+  it('submits the selection of the Rules tab', async () => {
+    const playlist = h.factory('playlist').make()
+    const storeMock = h.mock(playlistStore, 'store').mockResolvedValue(playlist)
+    renderComponent()
+
+    await h.type(screen.getByRole('textbox', { name: 'name' }), 'Fast mix')
+    await h.user.click(screen.getByText('Rules'))
+    await h.type(screen.getByRole('spinbutton', { name: 'Minimum BPM' }), '120')
+    await h.type(screen.getByRole('spinbutton', { name: 'Maximum BPM' }), '140')
+    await h.type(screen.getByRole('spinbutton', { name: 'max_songs' }), '25')
+    await h.user.click(screen.getByLabelText('Pick the songs at random'))
+    await h.user.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => {
+      expect(storeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          selection: { genre: '', bpm_min: 120, bpm_max: 140, max_songs: 25, randomize: true },
+        }),
+      )
+    })
+  })
+
+  it('sends no selection when it is left empty', async () => {
+    const playlist = h.factory('playlist').make()
+    const storeMock = h.mock(playlistStore, 'store').mockResolvedValue(playlist)
+    renderComponent()
+
+    await h.type(screen.getByRole('textbox', { name: 'name' }), 'Plain')
+    await h.user.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => {
+      expect(storeMock).toHaveBeenCalledWith(expect.objectContaining({ selection: null }))
+    })
+  })
 })

@@ -564,6 +564,102 @@ class SmartPlaylistServiceTest extends TestCase
         ]);
     }
 
+    #[Test]
+    public function selectionAloneMakesAPlaylistSmart(): void
+    {
+        $playlist = create_playlist(['selection' => ['genre' => 'Rock']]);
+
+        self::assertTrue($playlist->is_smart);
+        self::assertSame('Rock', $playlist->selection->genre);
+    }
+
+    #[Test]
+    public function selectionNarrowsDownEveryRuleGroup(): void
+    {
+        $match = Song::factory()->createOne(['title' => 'Foo', 'bpm' => 120]);
+        $match->syncGenres('Rock');
+        $wrongBpm = Song::factory()->createOne(['title' => 'Foo', 'bpm' => 90]);
+        $wrongBpm->syncGenres('Rock');
+        $wrongGenre = Song::factory()->createOne(['title' => 'Bar', 'bpm' => 120]);
+        $wrongGenre->syncGenres('Jazz');
+        $noBpm = Song::factory()->createOne(['title' => 'Bar', 'bpm' => null]);
+        $noBpm->syncGenres('Rock');
+
+        $groups = [
+            [
+                'id' => Uuid::generate(),
+                'rules' => [
+                    ['id' => Uuid::generate(), 'model' => 'title', 'operator' => 'is', 'value' => ['Foo']],
+                ],
+            ],
+            [
+                'id' => Uuid::generate(),
+                'rules' => [
+                    ['id' => Uuid::generate(), 'model' => 'title', 'operator' => 'is', 'value' => ['Bar']],
+                ],
+            ],
+        ];
+
+        $playlist = create_playlist([
+            'rules' => $groups,
+            'selection' => ['genre' => 'Rock', 'bpm_min' => 100, 'bpm_max' => 130],
+        ]);
+
+        self::assertSame([$match->id], $this->service->getSongs($playlist, $playlist->owner)->modelKeys());
+    }
+
+    #[Test]
+    public function selectionOnlyPlaylistAppliesTheBpmRule(): void
+    {
+        $match = Song::factory()->createOne(['bpm' => 128]);
+        Song::factory()->createOne(['bpm' => 70]);
+
+        $playlist = create_playlist(['selection' => ['bpm_min' => 120]]);
+
+        self::assertSame([$match->id], $this->service->getSongs($playlist, $playlist->owner)->modelKeys());
+    }
+
+    #[Test]
+    public function selectionLimitsAndRandomizes(): void
+    {
+        Song::factory()->count(30)->create(['bpm' => 100]);
+
+        $limited = create_playlist(['selection' => ['bpm_min' => 90, 'max_songs' => 5]]);
+        $first = $this->service->getSongs($limited, $limited->owner)->modelKeys();
+
+        self::assertCount(5, $first);
+        self::assertSame($first, $this->service->getSongs($limited, $limited->owner)->modelKeys());
+
+        $random = create_playlist(['selection' => ['bpm_min' => 90, 'max_songs' => 5, 'randomize' => true]]);
+        $picks = collect(range(1, 6))->map(fn () => $this->service->getSongs($random, $random->owner)->modelKeys());
+
+        self::assertTrue($picks->every(static fn (array $ids) => count($ids) === 5));
+        self::assertGreaterThan(
+            1,
+            $picks
+                ->map(static fn (array $ids) => implode(',', $ids))
+                ->unique()
+                ->count(),
+        );
+    }
+
+    #[Test]
+    public function bpmAndKeyRules(): void
+    {
+        $matches = Song::factory()->count(1)->create(['bpm' => 140, 'musical_key' => 'Am']);
+        Song::factory()->createOne(['bpm' => 100, 'musical_key' => 'C']);
+
+        $this->assertMatchesAgainstRules($matches, [
+            [
+                'id' => Uuid::generate(),
+                'rules' => [
+                    ['id' => Uuid::generate(), 'model' => 'bpm', 'operator' => 'isBetween', 'value' => [130, 150]],
+                    ['id' => Uuid::generate(), 'model' => 'musical_key', 'operator' => 'is', 'value' => ['Am']],
+                ],
+            ],
+        ]);
+    }
+
     protected function assertMatchesAgainstRules(Collection $matches, array $rules, ?User $owner = null): void
     {
         $playlist = create_playlist(['rules' => $rules]);

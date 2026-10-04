@@ -81,6 +81,17 @@ describe('playlistStore', () => {
     expect(playlist.rules).toEqual(ruleGroups)
   })
 
+  it('sets up a smart playlist that only has a selection', () => {
+    const playlist = h.factory('playlist').make({
+      is_smart: true,
+      rules: null as unknown as SmartPlaylistRuleGroup[],
+    })
+
+    playlistStore.setupSmartPlaylist(playlist)
+
+    expect(playlist.rules).toEqual([])
+  })
+
   it('stores a playlist', async () => {
     const songs = h.factory('song').make(3)
     const playlist = h.factory('playlist').make()

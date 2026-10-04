@@ -295,6 +295,15 @@ interface SmartPlaylistRuleGroup {
   rules: SmartPlaylistRule[]
 }
 
+/** Playlist-wide narrowing of a smart playlist, on top of its rule groups. Empty values mean "no limit". */
+interface SmartPlaylistSelection {
+  genre: string
+  bpm_min: number | '' | null
+  bpm_max: number | '' | null
+  max_songs: number | '' | null
+  randomize: boolean
+}
+
 interface SmartPlaylistModel {
   name:
     | 'title'
@@ -308,6 +317,8 @@ interface SmartPlaylistModel {
     | 'interactions.last_played_at'
     | 'genre'
     | 'year'
+    | 'bpm'
+    | 'musical_key'
   type: 'text' | 'number' | 'date'
   label: string
   unit?: 'seconds' | 'days'
@@ -380,6 +391,7 @@ interface Playlist {
   is_smart: boolean
   is_collaborative: boolean
   rules: SmartPlaylistRuleGroup[]
+  selection?: SmartPlaylistSelection | null
   cover: string | null
   playables?: Playable[]
   permissions: {

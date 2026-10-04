@@ -55,6 +55,7 @@
             class="space-y-5"
           >
             <div class="scroll-mask-y group-container space-y-5 overflow-auto max-h-[480px]">
+              <SelectionFields v-model="selection" />
               <RuleGroup
                 v-for="(group, index) in collectedRuleGroups"
                 :key="group.id"
@@ -94,10 +95,11 @@ import type { CreatePlaylistData } from '@/stores/playlistStore'
 import { playlistStore } from '@/stores/playlistStore'
 import { useDialogBox } from '@/composables/useDialogBox'
 import { useMessageToaster } from '@/composables/useMessageToaster'
-import { useSmartPlaylistForm } from '@/composables/useSmartPlaylistForm'
+import { isSmartPlaylistSelectionEmpty, useSmartPlaylistForm } from '@/composables/useSmartPlaylistForm'
 import { useRouter } from '@/composables/useRouter'
 import { useForm } from '@/composables/useForm'
 
+import SelectionFields from '@/components/playlist/smart-playlist/SmartPlaylistSelectionFields.vue'
 import TextInput from '@/components/ui/form/TextInput.vue'
 import FormRow from '@/components/ui/form/FormRow.vue'
 import FolderSelect from '@/components/ui/form/FolderSelect.vue'
@@ -114,7 +116,8 @@ const emit = defineEmits<{ (e: 'close'): void }>()
 
 const { folder: targetFolder } = props
 
-const { Btn, RuleGroup, collectedRuleGroups, addGroup, onGroupChanged } = useSmartPlaylistForm()
+const { Btn, RuleGroup, collectedRuleGroups, selection, serializedSelection, addGroup, onGroupChanged } =
+  useSmartPlaylistForm()
 
 const { toastSuccess } = useMessageToaster()
 const { showConfirmDialog } = useDialogBox()
@@ -132,11 +135,15 @@ const { data, isPristine, handleSubmit } = useForm<CreatePlaylistData>({
     folder_name: null,
     cover: null,
   },
-  isPristine: (original, current) => isEqual(original, current) && collectedRuleGroups.value.length === 0,
+  isPristine: (original, current) =>
+    isEqual(original, current) &&
+    collectedRuleGroups.value.length === 0 &&
+    isSmartPlaylistSelectionEmpty(selection.value),
   onSubmit: async data =>
     await playlistStore.store({
       ...data,
       rules: collectedRuleGroups.value,
+      selection: serializedSelection(),
     }),
   onSuccess: (playlist: Playlist) => {
     toastSuccess(`Playlist "${playlist.name}" created.`)

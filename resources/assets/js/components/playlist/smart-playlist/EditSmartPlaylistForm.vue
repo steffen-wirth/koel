@@ -56,6 +56,7 @@
             class="space-y-5"
           >
             <div class="scroll-mask-y group-container space-y-5 overflow-auto max-h-[480px]">
+              <SelectionFields v-model="selection" />
               <RuleGroup
                 v-for="(group, index) in collectedRuleGroups"
                 :key="group.id"
@@ -100,6 +101,7 @@ import { useMessageToaster } from '@/composables/useMessageToaster'
 import { useSmartPlaylistForm } from '@/composables/useSmartPlaylistForm'
 import { useForm } from '@/composables/useForm'
 
+import SelectionFields from '@/components/playlist/smart-playlist/SmartPlaylistSelectionFields.vue'
 import TextInput from '@/components/ui/form/TextInput.vue'
 import FormRow from '@/components/ui/form/FormRow.vue'
 import FolderSelect from '@/components/ui/form/FolderSelect.vue'
@@ -119,18 +121,33 @@ const { playlist } = props
 const { toastSuccess } = useMessageToaster()
 const { showConfirmDialog } = useDialogBox()
 
-const { Btn, RuleGroup, activateTab, isTabActive, collectedRuleGroups, addGroup, onGroupChanged } =
-  useSmartPlaylistForm(structuredClone(toRaw(playlist.rules)))
+const {
+  Btn,
+  RuleGroup,
+  activateTab,
+  isTabActive,
+  collectedRuleGroups,
+  selection,
+  serializedSelection,
+  addGroup,
+  onGroupChanged,
+} = useSmartPlaylistForm(structuredClone(toRaw(playlist.rules)), structuredClone(toRaw(playlist.selection ?? null)))
+
+const initialSelection = serializedSelection()
 
 const close = () => emit('close')
 
 const { data, isPristine, handleSubmit } = useForm<UpdatePlaylistData>({
   initialValues: { ...pick(playlist, 'name', 'folder_id', 'description', 'cover'), folder_name: null },
-  isPristine: (original, current) => isEqual(original, current) && isEqual(collectedRuleGroups.value, playlist.rules),
+  isPristine: (original, current) =>
+    isEqual(original, current) &&
+    isEqual(collectedRuleGroups.value, playlist.rules) &&
+    isEqual(serializedSelection(), initialSelection),
   onSubmit: async data => {
     const formData = {
       ...structuredClone(toRaw(data)),
       rules: collectedRuleGroups.value,
+      selection: serializedSelection(),
     }
 
     if (formData.cover === playlist.cover) {

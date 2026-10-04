@@ -8,6 +8,7 @@ use App\Rules\ValidImageData;
 use App\Rules\ValidSmartPlaylistRulePayload;
 use App\Values\Playlist\PlaylistUpdateData;
 use App\Values\SmartPlaylist\SmartPlaylistRuleGroupCollection;
+use App\Values\SmartPlaylist\SmartPlaylistSelection;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +18,7 @@ use Illuminate\Validation\Rule;
  * @property-read ?string $folder_id
  * @property-read ?string $folder_name
  * @property-read array $rules
+ * @property-read ?array $selection
  * @property-read ?string $cover
  */
 class PlaylistUpdateRequest extends Request
@@ -28,6 +30,12 @@ class PlaylistUpdateRequest extends Request
             'name' => 'required',
             'description' => ['string', 'sometimes', 'nullable'],
             'rules' => ['array', 'nullable', new ValidSmartPlaylistRulePayload()],
+            'selection' => ['sometimes', 'nullable', 'array'],
+            'selection.genre' => ['nullable', 'string', 'max:255'],
+            'selection.bpm_min' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'selection.bpm_max' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'selection.max_songs' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'selection.randomize' => ['nullable', 'boolean'],
             'folder_id' => [
                 'nullable',
                 'sometimes',
@@ -48,6 +56,7 @@ class PlaylistUpdateRequest extends Request
             folderName: $this->folder_name,
             cover: $this->has('cover') ? $this->string('cover') : null,
             ruleGroups: $this->rules ? SmartPlaylistRuleGroupCollection::create(Arr::wrap($this->rules)) : null,
+            selection: SmartPlaylistSelection::tryFrom($this->selection),
         );
     }
 }

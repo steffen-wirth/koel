@@ -40,6 +40,7 @@ class PlaylistService
                 'name' => $data->name,
                 'description' => $data->description,
                 'rules' => $data->ruleGroups,
+                'selection' => $data->selection,
                 'cover' => $cover,
             ]);
 
@@ -77,6 +78,7 @@ class PlaylistService
             'name' => $dto->name,
             'description' => $dto->description,
             'rules' => $dto->ruleGroups,
+            'selection' => $dto->selection,
         ];
 
         if (is_string($dto->cover)) {

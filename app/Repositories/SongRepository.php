@@ -292,21 +292,41 @@ class SongRepository extends Repository implements ScoutableRepository
 
         $query = Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())->withUserContext();
 
-        $playlist->rule_groups->each(static function (RuleGroup $group, int $index) use ($query): void {
-            $whereClosure = static function (SongBuilder $subQuery) use ($group): void {
-                $group->rules->each(static function (Rule $rule) use ($subQuery): void {
-                    QueryModifier::applyRule($rule, $subQuery);
-                });
-            };
+        // The rule groups are alternatives of each other, but the selection narrows down all of them.
+        $query->where(static function (SongBuilder $query) use ($playlist): void {
+            $playlist->rule_groups?->each(static function (RuleGroup $group, int $index) use ($query): void {
+                $whereClosure = static function (SongBuilder $subQuery) use ($group): void {
+                    $group->rules->each(static function (Rule $rule) use ($subQuery): void {
+                        QueryModifier::applyRule($rule, $subQuery);
+                    });
+                };
 
-            $query->when(
-                $index === 0,
-                static fn (SongBuilder $query) => $query->where($whereClosure),
-                static fn (SongBuilder $query) => $query->orWhere($whereClosure),
-            );
+                $query->when(
+                    $index === 0,
+                    static fn (SongBuilder $query) => $query->where($whereClosure),
+                    static fn (SongBuilder $query) => $query->orWhere($whereClosure),
+                );
+            });
         });
 
-        return $query->orderBy('songs.title')->limit(self::LIST_SIZE_LIMIT)->get();
+        $selection = $playlist->selection;
+
+        if ($selection) {
+            $query->filterBy(SongFilters::make(
+                genre: $selection->genre,
+                bpmMin: $selection->bpmMin,
+                bpmMax: $selection->bpmMax,
+            ));
+        }
+
+        return $query
+            ->when(
+                $selection?->randomize,
+                static fn (SongBuilder $query) => $query->inRandomOrder(),
+                static fn (SongBuilder $query) => $query->orderBy('songs.title'),
+            )
+            ->limit(min($selection?->maxSongs ?? self::LIST_SIZE_LIMIT, self::LIST_SIZE_LIMIT))
+            ->get();
     }
 
     /** @return Collection<int, Song> */

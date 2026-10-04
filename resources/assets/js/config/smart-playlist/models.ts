@@ -25,6 +25,16 @@ const models: SmartPlaylistModel[] = [
     label: 'Year',
   },
   {
+    name: 'bpm',
+    type: 'number',
+    label: 'BPM',
+  },
+  {
+    name: 'musical_key',
+    type: 'text',
+    label: 'Key',
+  },
+  {
     name: 'interactions.play_count',
     type: 'number',
     label: 'Play Count',

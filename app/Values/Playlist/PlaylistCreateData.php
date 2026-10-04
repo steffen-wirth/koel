@@ -4,6 +4,7 @@ namespace App\Values\Playlist;
 
 use App\Exceptions\PlaylistBothSongsAndRulesProvidedException;
 use App\Values\SmartPlaylist\SmartPlaylistRuleGroupCollection;
+use App\Values\SmartPlaylist\SmartPlaylistSelection;
 use Illuminate\Contracts\Support\Arrayable;
 
 final readonly class PlaylistCreateData implements Arrayable
@@ -19,8 +20,12 @@ final readonly class PlaylistCreateData implements Arrayable
         public ?string $cover,
         public array $playableIds,
         public ?SmartPlaylistRuleGroupCollection $ruleGroups,
+        public ?SmartPlaylistSelection $selection = null,
     ) {
-        throw_if($this->ruleGroups && $this->playableIds, PlaylistBothSongsAndRulesProvidedException::class);
+        throw_if(
+            ($this->ruleGroups || $this->selection) && $this->playableIds,
+            PlaylistBothSongsAndRulesProvidedException::class,
+        );
     }
 
     public static function make(
@@ -31,6 +36,7 @@ final readonly class PlaylistCreateData implements Arrayable
         ?string $cover = null,
         array $playableIds = [],
         ?SmartPlaylistRuleGroupCollection $ruleGroups = null,
+        ?SmartPlaylistSelection $selection = null,
     ): self {
         return new self(
             name: $name,
@@ -40,6 +46,7 @@ final readonly class PlaylistCreateData implements Arrayable
             cover: $cover,
             playableIds: $playableIds,
             ruleGroups: $ruleGroups,
+            selection: $selection,
         );
     }
 
@@ -53,6 +60,7 @@ final readonly class PlaylistCreateData implements Arrayable
             'cover' => $this->cover,
             'playable_ids' => $this->playableIds,
             'rule_groups' => $this->ruleGroups,
+            'selection' => $this->selection,
         ];
     }
 }

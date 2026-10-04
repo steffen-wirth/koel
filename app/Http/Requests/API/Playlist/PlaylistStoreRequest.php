@@ -9,6 +9,7 @@ use App\Rules\ValidImageData;
 use App\Rules\ValidSmartPlaylistRulePayload;
 use App\Values\Playlist\PlaylistCreateData;
 use App\Values\SmartPlaylist\SmartPlaylistRuleGroupCollection;
+use App\Values\SmartPlaylist\SmartPlaylistSelection;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +19,7 @@ use Illuminate\Validation\Rule;
  * @property-read ?string $folder_name
  * @property-read ?string $description
  * @property-read array $rules
+ * @property-read ?array $selection
  * @property-read string $name
  * @property-read ?string $cover
  */
@@ -31,6 +33,12 @@ class PlaylistStoreRequest extends Request
             'songs' => ['array', new AllPlayablesAreAccessibleBy($this->user())],
             'description' => ['string', 'sometimes', 'nullable'], // backward compatibility for mobile apps
             'rules' => ['array', 'nullable', new ValidSmartPlaylistRulePayload()],
+            'selection' => ['sometimes', 'nullable', 'array'],
+            'selection.genre' => ['nullable', 'string', 'max:255'],
+            'selection.bpm_min' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'selection.bpm_max' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'selection.max_songs' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'selection.randomize' => ['nullable', 'boolean'],
             'folder_id' => [
                 'nullable',
                 'sometimes',
@@ -52,6 +60,7 @@ class PlaylistStoreRequest extends Request
             cover: $this->cover,
             playableIds: Arr::wrap($this->songs),
             ruleGroups: $this->rules ? SmartPlaylistRuleGroupCollection::create(Arr::wrap($this->rules)) : null,
+            selection: SmartPlaylistSelection::tryFrom($this->selection),
         );
     }
 }
