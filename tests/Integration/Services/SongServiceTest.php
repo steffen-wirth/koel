@@ -58,6 +58,43 @@ class SongServiceTest extends TestCase
     }
 
     #[Test]
+    public function updateSongStoresMusicBrainzDataAndWritesItToFile(): void
+    {
+        $path = sys_get_temp_dir() . '/' . uniqid('koel-', true) . '.flac';
+        copy(test_path('songs/full-vorbis-comments.flac'), $path);
+        $song = Song::factory()->createOne(['path' => $path, 'title' => 'Amet']);
+        $song->credits()->create(['role' => 'composer', 'name' => 'Old']);
+
+        $recording = '11111111-1111-1111-1111-111111111111';
+        $releaseId = '22222222-2222-2222-2222-222222222222';
+
+        $result = $this->service->updateSongs([$song->id], SongUpdateData::make(
+            title: 'Amet',
+            mbid: $recording,
+            albumMbid: $releaseId,
+            credits: [
+                ['role' => 'composer', 'name' => 'Ada', 'artist_mbid' => '33333333-3333-3333-3333-333333333333'],
+                ['role' => 'instrument', 'name' => 'Bo', 'instrument' => 'piano'],
+            ],
+        ));
+
+        $tags = (string) shell_exec('metaflac --export-tags-to=- ' . escapeshellarg($path));
+        @unlink($path);
+
+        /** @var Song $updated */
+        $updated = $result->updatedSongs->first();
+
+        self::assertSame($recording, $updated->mbid);
+        self::assertSame($releaseId, $updated->album->mbid);
+        self::assertSame(['Ada', 'Bo'], $updated->credits->pluck('name')->all());
+        self::assertStringContainsString("MUSICBRAINZ_TRACKID=$recording\n", $tags);
+        self::assertStringContainsString("MUSICBRAINZ_ALBUMID=$releaseId\n", $tags);
+        self::assertStringContainsString("COMPOSER=Ada\n", $tags);
+        self::assertStringContainsString("PERFORMER=Bo (piano)\n", $tags);
+        self::assertStringNotContainsString('COMPOSER=Old', $tags);
+    }
+
+    #[Test]
     public function updateSingleSong(): void
     {
         $song = Song::factory()->createOne();

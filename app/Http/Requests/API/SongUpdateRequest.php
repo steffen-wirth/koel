@@ -17,6 +17,15 @@ class SongUpdateRequest extends Request
     {
         return [
             'data' => ['required', 'array'],
+            'data.mbid' => ['nullable', 'uuid'],
+            'data.album_mbid' => ['nullable', 'uuid'],
+            'data.artist_mbid' => ['nullable', 'uuid'],
+            'data.albumartist_mbid' => ['nullable', 'uuid'],
+            'data.credits' => ['nullable', 'array', 'max:200'],
+            'data.credits.*.role' => ['required', 'string', 'max:64'],
+            'data.credits.*.name' => ['required', 'string', 'max:255'],
+            'data.credits.*.instrument' => ['nullable', 'string', 'max:255'],
+            'data.credits.*.artist_mbid' => ['nullable', 'uuid'],
             'songs' => ['required', 'array', Rule::exists(Song::class, 'id')->whereNull('podcast_id')],
         ];
     }
@@ -33,6 +42,11 @@ class SongUpdateRequest extends Request
             genre: $this->input('data.genre'),
             year: $this->nullableInt('data.year'),
             lyrics: $this->input('data.lyrics'),
+            mbid: $this->input('data.mbid'),
+            albumMbid: $this->input('data.album_mbid'),
+            artistMbid: $this->input('data.artist_mbid'),
+            albumArtistMbid: $this->input('data.albumartist_mbid'),
+            credits: $this->input('data.credits'),
         );
     }
 

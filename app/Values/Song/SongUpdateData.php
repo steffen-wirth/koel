@@ -16,6 +16,12 @@ final class SongUpdateData implements Arrayable
         public ?string $genre,
         public ?int $year,
         public ?string $lyrics,
+        public ?string $mbid = null,
+        public ?string $albumMbid = null,
+        public ?string $artistMbid = null,
+        public ?string $albumArtistMbid = null,
+        /** @var ?list<array{role: string, name: string, instrument?: ?string, artist_mbid?: ?string}> */
+        public ?array $credits = null,
     ) {}
 
     public static function make(
@@ -28,8 +34,28 @@ final class SongUpdateData implements Arrayable
         ?string $genre = null,
         ?int $year = null,
         ?string $lyrics = null,
+        ?string $mbid = null,
+        ?string $albumMbid = null,
+        ?string $artistMbid = null,
+        ?string $albumArtistMbid = null,
+        ?array $credits = null,
     ): self {
-        return new self($title, $artistName, $albumName, $albumArtistName, $track, $disc, $genre, $year, $lyrics);
+        return new self(
+            $title,
+            $artistName,
+            $albumName,
+            $albumArtistName,
+            $track,
+            $disc,
+            $genre,
+            $year,
+            $lyrics,
+            $mbid,
+            $albumMbid,
+            $artistMbid,
+            $albumArtistMbid,
+            $credits,
+        );
     }
 
     /** @return array<string, mixed> */

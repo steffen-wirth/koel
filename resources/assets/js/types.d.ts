@@ -203,6 +203,13 @@ interface BasePlayable extends IStreamable {
   embed_stream_url?: string // only when embedded
 }
 
+interface SongCredit {
+  role: string
+  name: string
+  instrument?: string | null
+  artist_mbid?: string | null
+}
+
 interface Song extends BasePlayable {
   type: 'songs'
   readonly owner_id: User['id']
@@ -221,6 +228,7 @@ interface Song extends BasePlayable {
   is_public: boolean
   is_external: boolean
   mbid?: string | null
+  credits?: SongCredit[]
   file_created_at?: string | null
   file_size?: number | null
   basename?: string
@@ -758,7 +766,7 @@ interface CursorPaginatorResource<T> {
   }
 }
 
-type EditSongFormTabName = 'details' | 'lyrics' | 'visibility'
+type EditSongFormTabName = 'details' | 'lyrics' | 'credits' | 'visibility'
 
 interface ToastMessage {
   id: string
@@ -773,6 +781,9 @@ type SongFormat = 'flac' | 'mp3'
 interface SongFilters {
   genre: string
   formats: SongFormat[]
+  /** Name of a credited person (composer, producer, …) */
+  credit?: string
+  credit_role?: string
 }
 
 interface Genre {

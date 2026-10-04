@@ -126,22 +126,29 @@ class SongBuilder extends FavoriteableBuilder
     }
 
     /**
-     * Narrow down the songs by genre name and/or file format.
+     * Narrow down the songs by genre name, file format and/or credited person.
      *
      * @param list<string> $formats File extensions, without the leading dot
+     * @param ?array{role: ?string, name: string} $credit Songs credited to the named person, in the given role if any
      */
-    public function filterBy(?string $genre = null, array $formats = []): self
+    public function filterBy(?string $genre = null, array $formats = [], ?array $credit = null): self
     {
-        return $this->when($genre, static fn (self $query) => $query->whereHas('genres', static fn (Builder $genres) => $genres->where(
-            'genres.name',
-            $genre,
-        )))->when($formats, static fn (self $query) => $query->where(static function (Builder $query) use (
-            $formats,
-        ): void {
-            foreach ($formats as $format) {
-                $query->orWhereRaw('LOWER(songs.path) LIKE ?', ['%.' . Str::lower($format)]);
-            }
-        }));
+        return $this
+            ->when($credit, static fn (self $query) => $query->whereHas('credits', static fn (Builder $credits) => $credits->where(
+                'song_credits.name',
+                $credit['name'],
+            )->when($credit['role'], static fn (Builder $q) => $q->where('song_credits.role', $credit['role']))))
+            ->when($genre, static fn (self $query) => $query->whereHas('genres', static fn (Builder $genres) => $genres->where(
+                'genres.name',
+                $genre,
+            )))
+            ->when($formats, static fn (self $query) => $query->where(static function (Builder $query) use (
+                $formats,
+            ): void {
+                foreach ($formats as $format) {
+                    $query->orWhereRaw('LOWER(songs.path) LIKE ?', ['%.' . Str::lower($format)]);
+                }
+            }));
     }
 
     public function withUserContext(

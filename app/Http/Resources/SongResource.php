@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Facades\License;
 use App\Models\Song;
+use App\Models\SongCredit;
 use App\Models\User;
 use App\Services\Integrations\MusicBrainzService;
 use Illuminate\Http\Request;
@@ -130,6 +131,15 @@ class SongResource extends JsonResource
             'created_at' => $this->unless($embedding, $this->song->created_at),
             'file_created_at' => $this->unless($embedding, $this->song->file_created_at),
             'mbid' => $this->when($musicBrainzEnabled && !$embedding, $this->song->mbid),
+            'credits' => $this->unless($embedding, fn () => $this->song
+                ->credits
+                ->map(static fn (SongCredit $credit) => [
+                    'role' => $credit->role,
+                    'name' => $credit->name,
+                    'instrument' => $credit->instrument,
+                    'artist_mbid' => $credit->artist_mbid,
+                ])
+                ->values()),
             'embed_stream_url' => $this->when($embedding, fn () => URL::temporarySignedRoute(
                 'embeds.stream',
                 now()->addDay(),

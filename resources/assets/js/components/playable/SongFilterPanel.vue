@@ -15,12 +15,17 @@
       </label>
     </fieldset>
 
-    <Btn v-if="filters.genre || filters.formats.length" variant="ghost" @click.prevent="reset">Reset filters</Btn>
+    <SongCreditFilter v-model:role="filters.credit_role" v-model:name="filters.credit" />
+
+    <Btn v-if="filters.genre || filters.formats.length || filters.credit" variant="ghost" @click.prevent="reset"
+      >Reset filters</Btn
+    >
   </div>
 </template>
 
 <script lang="ts" setup>
 import Btn from '@/components/ui/form/Btn.vue'
+import SongCreditFilter from '@/components/playable/SongCreditFilter.vue'
 import GenrePicker from '@/components/genre/GenrePicker.vue'
 
 const filters = defineModel<SongFilters>({ required: true })
@@ -36,5 +41,7 @@ const toggleGenre = (genre: string) => (filters.value.genre = genre === filters.
 const reset = () => {
   filters.value.genre = ''
   filters.value.formats = []
+  filters.value.credit = ''
+  filters.value.credit_role = ''
 }
 </script>

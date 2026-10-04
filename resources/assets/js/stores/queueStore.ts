@@ -8,7 +8,12 @@ import { playableStore } from '@/stores/playableStore'
 
 const toFilterQuery = (filters: Partial<SongFilters>) => {
   const query = new URLSearchParams(
-    flattenParams({ genre: filters.genre || undefined, formats: filters.formats }),
+    flattenParams({
+      genre: filters.genre || undefined,
+      formats: filters.formats,
+      credit: filters.credit || undefined,
+      credit_role: filters.credit ? filters.credit_role || undefined : undefined,
+    }),
   ).toString()
 
   return query ? `&${query}` : ''

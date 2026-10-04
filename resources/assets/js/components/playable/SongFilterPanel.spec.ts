@@ -53,7 +53,7 @@ describe('songFilterPanel.vue', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Reset filters' }))
 
-    expect(filters).toEqual({ genre: '', formats: [] })
+    expect(filters).toEqual({ genre: '', formats: [], credit: '', credit_role: '' })
   })
 
   it('offers no reset without filters', () => {

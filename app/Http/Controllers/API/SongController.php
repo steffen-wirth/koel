@@ -38,6 +38,7 @@ class SongController extends Controller
             scopedUser: $this->user,
             genre: $request->genre,
             formats: $request->formats ?? [],
+            credit: $request->credit(),
         ));
     }
 

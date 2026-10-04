@@ -28,6 +28,11 @@ export interface SongUpdateData {
   lyrics?: string
   year?: number | null
   genre?: string
+  mbid?: string | null
+  album_mbid?: string | null
+  artist_mbid?: string | null
+  albumartist_mbid?: string | null
+  credits?: SongCredit[]
   visibility?: 'public' | 'private' | 'unchanged'
 }
 

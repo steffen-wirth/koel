@@ -2,6 +2,8 @@
 
 namespace Tests\Integration\Services\Integrations;
 
+use App\Http\Integrations\MusicBrainz\Requests\GetRecordingCreditsRequest;
+use App\Http\Integrations\MusicBrainz\Requests\SearchForRecordingRequest;
 use App\Models\Album;
 use App\Models\Artist;
 use App\Pipelines\Encyclopedia\GetAlbumTracksUsingMbid;
@@ -20,6 +22,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
+use Saloon\Http\Faking\MockClient;
+use Saloon\Http\Faking\MockResponse;
 use Tests\TestCase;
 use Throwable;
 
@@ -233,5 +237,93 @@ class MusicBrainzServiceTest extends TestCase
             ]);
 
         self::assertNull($this->service->getAlbumInformation($album));
+    }
+
+    #[Test]
+    public function searchRecordings(): void
+    {
+        config(['koel.services.musicbrainz.enabled' => true]);
+
+        MockClient::global([
+            SearchForRecordingRequest::class => MockResponse::make([
+                'recordings' => [
+                    [
+                        'id' => 'rec-mbid',
+                        'title' => 'Song',
+                        'artist-credit' => [
+                            ['name' => 'Artist A', 'joinphrase' => ' & ', 'artist' => ['id' => 'artist-mbid']],
+                            ['name' => 'Artist B'],
+                        ],
+                        'releases' => [
+                            [
+                                'id' => 'release-mbid',
+                                'title' => 'Album',
+                                'date' => '1999-05-01',
+                                'artist-credit' => [['name' => 'Various Artists', 'artist' => ['id' => 'va-mbid']]],
+                                'release-group' => ['id' => 'rg-mbid'],
+                                'media' => [['position' => 2, 'track' => [['number' => '7']]]],
+                            ],
+                        ],
+                    ],
+                    ['title' => 'No release'],
+                ],
+            ]),
+        ]);
+
+        $this->mockPipelinePipe(GetGenresUsingReleaseGroupMbid::class, 'rg-mbid', ['Rock', 'Blues']);
+
+        self::assertSame(
+            [
+                [
+                    'url' => 'https://musicbrainz.org/recording/rec-mbid',
+                    'mbid' => 'rec-mbid',
+                    'album_mbid' => 'release-mbid',
+                    'artist_mbid' => 'artist-mbid',
+                    'albumartist_mbid' => 'va-mbid',
+                    'title' => 'Song',
+                    'artist_name' => 'Artist A & Artist B',
+                    'album_name' => 'Album',
+                    'album_artist_name' => 'Various Artists',
+                    'track' => 7,
+                    'disc' => 2,
+                    'year' => 1999,
+                    'genre' => 'Rock, Blues',
+                ],
+            ],
+            $this->service->searchRecordings('Song', 'Artist A'),
+        );
+    }
+
+    #[Test]
+    public function getRecordingCredits(): void
+    {
+        config(['koel.services.musicbrainz.enabled' => true]);
+
+        MockClient::global([
+            GetRecordingCreditsRequest::class => MockResponse::make([
+                'relations' => [
+                    ['type' => 'producer', 'attributes' => [], 'artist' => ['id' => 'a1', 'name' => 'Pat']],
+                    ['type' => 'instrument', 'attributes' => ['guitar', 'bass'], 'artist' => ['name' => 'Gil']],
+                    [
+                        'type' => 'performance',
+                        'work' => [
+                            'relations' => [
+                                ['type' => 'composer', 'attributes' => [], 'artist' => ['id' => 'a2', 'name' => 'Ada']],
+                                ['type' => 'composer', 'attributes' => [], 'artist' => ['id' => 'a2', 'name' => 'Ada']],
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        self::assertSame(
+            [
+                ['role' => 'producer', 'name' => 'Pat', 'instrument' => null, 'artist_mbid' => 'a1'],
+                ['role' => 'instrument', 'name' => 'Gil', 'instrument' => 'guitar, bass', 'artist_mbid' => null],
+                ['role' => 'composer', 'name' => 'Ada', 'instrument' => null, 'artist_mbid' => 'a2'],
+            ],
+            $this->service->getRecordingCredits('11111111-1111-1111-1111-111111111111'),
+        );
     }
 }

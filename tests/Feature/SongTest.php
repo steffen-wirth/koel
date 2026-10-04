@@ -38,6 +38,38 @@ class SongTest extends TestCase
     }
 
     #[Test]
+    public function indexFilteredByCredit(): void
+    {
+        $composed = Song::factory()->create();
+        $composed->credits()->create(['role' => 'composer', 'name' => 'Ada']);
+        $produced = Song::factory()->create();
+        $produced->credits()->create(['role' => 'producer', 'name' => 'Ada']);
+        Song::factory()->create()->credits()->create(['role' => 'composer', 'name' => 'Bo']);
+
+        $ids = static fn ($response) => collect($response->json('data'))->pluck('id')->sort()->values()->all();
+
+        self::assertSame(
+            collect([$composed, $produced])->pluck('id')->sort()->values()->all(),
+            $ids($this->getAs('api/songs?cursor=&credit=Ada')),
+        );
+        self::assertSame([$composed->id], $ids($this->getAs('api/songs?cursor=&credit=Ada&credit_role=composer')));
+    }
+
+    #[Test]
+    public function listCreditNames(): void
+    {
+        $song = Song::factory()->create();
+        $song->credits()->createMany([
+            ['role' => 'composer', 'name' => 'Bo'],
+            ['role' => 'producer', 'name' => 'Ada'],
+            ['role' => 'composer', 'name' => 'Ada'],
+        ]);
+
+        $this->getAs('api/song-credits/names')->assertJson(['names' => ['Ada', 'Bo']]);
+        $this->getAs('api/song-credits/names?role=producer')->assertJson(['names' => ['Ada']]);
+    }
+
+    #[Test]
     public function indexFilteredByGenreAndFormat(): void
     {
         $rockFlac = Song::factory()->create(['path' => '/music/a.FLAC']);

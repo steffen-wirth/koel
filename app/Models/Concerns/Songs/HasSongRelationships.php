@@ -9,6 +9,7 @@ use App\Models\Genre;
 use App\Models\Interaction;
 use App\Models\Playlist;
 use App\Models\Podcast;
+use App\Models\SongCredit;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -54,5 +55,10 @@ trait HasSongRelationships
     public function genres(): BelongsToMany
     {
         return $this->belongsToMany(Genre::class);
+    }
+
+    public function credits(): HasMany
+    {
+        return $this->hasMany(SongCredit::class);
     }
 }

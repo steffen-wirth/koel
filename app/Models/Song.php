@@ -51,6 +51,7 @@ use PhanAn\Poddle\Values\EpisodeMetadata;
  * @property ?string $mime_type The MIME type of the song file, if available
  * @property Carbon $created_at
  * @property Collection<Genre>|array<array-key, Genre> $genres
+ * @property Collection<SongCredit>|array<array-key, SongCredit> $credits
  * @property SongStorageType $storage
  * @property User $owner
  * @property bool $is_public
@@ -125,7 +126,7 @@ class Song extends Model implements AuditableContract, Favoriteable, Embeddable,
         ];
     }
 
-    protected $with = ['album', 'artist', 'album.artist', 'podcast', 'genres', 'owner'];
+    protected $with = ['album', 'artist', 'album.artist', 'podcast', 'genres', 'owner', 'credits'];
 
     public static function query(?PlayableType $type = null, ?User $user = null): SongBuilder
     {

@@ -2,6 +2,7 @@
 
 namespace App\Services\TagEditors;
 
+use App\Models\SongCredit;
 use RuntimeException;
 
 /**
@@ -20,12 +21,28 @@ class Id3v2TagEditor
         'genre' => 'TCON',
     ];
 
+    /** MusicBrainz identifiers kept in TXXX frames, by their conventional description. */
+    private const TXXX_MBIDS = [
+        'album_mbid' => 'MusicBrainz Album Id',
+        'artist_mbid' => 'MusicBrainz Artist Id',
+        'albumartist_mbid' => 'MusicBrainz Album Artist Id',
+    ];
+
+    private const UFID_OWNER = 'http://musicbrainz.org';
+
+    private const CREDIT_FRAMES = ['TCOM', 'TEXT', 'TPE3', 'TPE4', 'TIPL', 'IPLS', 'TMCL'];
+
+    /** Credit roles that list their people in the "involvement" frame, with the role as its label. */
+    private const INVOLVEMENT_ROLES = ['producer', 'arranger', 'engineer', 'recording', 'mix'];
+
+    private const PERFORMER_ROLES = ['instrument', 'vocal', 'performer'];
+
     private const NEW_TAG_PADDING = 1024;
 
     /**
      * Edit the given tags of an MP3 file. An empty (or zero) value removes the tag.
      *
-     * @param array<string, string|int|null> $tags
+     * @param array<string, string|int|null|list<SongCredit>> $tags
      */
     public function edit(string $path, array $tags): void
     {
@@ -57,6 +74,20 @@ class Id3v2TagEditor
                     ['USLT', 'SYLT'],
                     $this->lyricsFrame($version, (string) $tags['lyrics']),
                 );
+            }
+
+            foreach (self::TXXX_MBIDS as $key => $description) {
+                if (array_key_exists($key, $tags)) {
+                    $frames = $this->replaceTxxx($frames, $version, $description, (string) $tags[$key]);
+                }
+            }
+
+            if (array_key_exists('mbid', $tags)) {
+                $frames = $this->replaceUfid($frames, $version, (string) $tags['mbid']);
+            }
+
+            if (array_key_exists('credits', $tags)) {
+                $frames = $this->replaceCredits($frames, $version, $tags['credits']);
             }
 
             $this->writeFile($path, $in, $version, $frames, $oldTagSize, $audioOffset);
@@ -147,10 +178,14 @@ class Id3v2TagEditor
     }
 
     /** @return array{int, string} ID3 encoding byte and the encoded text */
-    private function encode(int $version, string $text): array
+    private function encode(int $version, string $text, ?int $forceEncoding = null): array
     {
         if ($version === 4) {
             return [3, $text];
+        }
+
+        if ($forceEncoding === 1) {
+            return [1, "\xFF\xFE" . mb_convert_encoding($text, 'UTF-16LE', 'UTF-8')];
         }
 
         $latin1 = mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8');
@@ -160,6 +195,145 @@ class Id3v2TagEditor
         }
 
         return [1, "\xFF\xFE" . mb_convert_encoding($text, 'UTF-16LE', 'UTF-8')];
+    }
+
+    /**
+     * @param list<array{string, string}> $frames
+     * @param iterable<SongCredit> $credits
+     * @return list<array{string, string}>
+     */
+    private function replaceCredits(array $frames, int $version, iterable $credits): array
+    {
+        $names = static fn (array $roles) => collect($credits)
+            ->filter(static fn (SongCredit $credit) => in_array($credit->role, $roles, true))
+            ->map(static fn (SongCredit $credit) => $credit->name)
+            ->unique()
+            ->values()
+            ->all();
+
+        $involved = [];
+        $performers = [];
+
+        foreach ($credits as $credit) {
+            if (in_array($credit->role, self::INVOLVEMENT_ROLES, true)) {
+                $involved[] = [$credit->role, $credit->name];
+            } elseif (in_array($credit->role, self::PERFORMER_ROLES, true)) {
+                $performers[] = [$credit->instrument ?: $credit->role, $credit->name];
+            }
+        }
+
+        $frames = array_values(array_filter(
+            $frames,
+            static fn (array $frame) => !in_array($frame[0], self::CREDIT_FRAMES, true),
+        ));
+
+        $new = [
+            $this->multiTextFrame($version, 'TCOM', $names(['composer', 'writer'])),
+            $this->multiTextFrame($version, 'TEXT', $names(['lyricist'])),
+            $this->multiTextFrame($version, 'TPE3', $names(['conductor'])),
+            $this->multiTextFrame($version, 'TPE4', $names(['remixer'])),
+        ];
+
+        if ($version === 4) {
+            $new[] = $this->multiTextFrame($version, 'TIPL', array_merge(...$involved));
+            $new[] = $this->multiTextFrame($version, 'TMCL', array_merge(...$performers));
+        } else {
+            // ID3v2.3 only knows one list of involved people.
+            $new[] = $this->multiTextFrame($version, 'IPLS', array_merge(...$involved, ...$performers));
+        }
+
+        foreach (array_filter($new) as $frame) {
+            $frames[] = [substr($frame, 0, 4), $frame];
+        }
+
+        return $frames;
+    }
+
+    /** @param list<string> $values */
+    private function multiTextFrame(int $version, string $id, array $values): ?string
+    {
+        if (!$values) {
+            return null;
+        }
+
+        [$encoding] = $this->encode($version, implode('', $values));
+        $terminator = $encoding === 1 ? "\x00\x00" : "\x00";
+        $body = implode($terminator, array_map(
+            fn (string $value) => $this->encode($version, $value, $encoding)[1],
+            $values,
+        ));
+
+        return $this->frame($version, $id, chr($encoding) . $body);
+    }
+
+    /**
+     * @param list<array{string, string}> $frames
+     * @return list<array{string, string}>
+     */
+    private function replaceTxxx(array $frames, int $version, string $description, string $value): array
+    {
+        $frames = array_values(array_filter(
+            $frames,
+            fn (array $frame) => $frame[0] !== 'TXXX' || $this->txxxDescription($frame[1]) !== $description,
+        ));
+
+        if ($value !== '') {
+            [$encoding, $encodedDescription] = $this->encode($version, $description);
+            $terminator = $encoding === 1 ? "\x00\x00" : "\x00";
+            $frame = $this->frame(
+                $version,
+                'TXXX',
+                chr($encoding) . $encodedDescription . $terminator . $this->encode($version, $value, $encoding)[1],
+            );
+            $frames[] = ['TXXX', $frame];
+        }
+
+        return $frames;
+    }
+
+    /**
+     * @param list<array{string, string}> $frames
+     * @return list<array{string, string}>
+     */
+    private function replaceUfid(array $frames, int $version, string $mbid): array
+    {
+        $frames = array_values(array_filter(
+            $frames,
+            static fn (array $frame) => $frame[0] !== 'UFID'
+            || !str_starts_with(substr($frame[1], 10), self::UFID_OWNER . "\x00"),
+        ));
+
+        if ($mbid !== '') {
+            $frames[] = ['UFID', $this->frame($version, 'UFID', self::UFID_OWNER . "\x00" . $mbid)];
+        }
+
+        return $frames;
+    }
+
+    private function txxxDescription(string $rawFrame): string
+    {
+        $body = substr($rawFrame, 10);
+        $encoding = ord($body[0] ?? "\x00");
+        $rest = substr($body, 1);
+
+        if ($encoding === 1 || $encoding === 2) {
+            // UTF-16: the description ends at the first aligned double null.
+            for ($i = 0; ($i + 1) < strlen($rest); $i += 2) {
+                if ($rest[$i] === "\x00" && $rest[$i + 1] === "\x00") {
+                    $text = substr($rest, 0, $i);
+
+                    return $encoding === 1 && str_starts_with($text, "\xFE\xFF")
+                        ? mb_convert_encoding(substr($text, 2), 'UTF-8', 'UTF-16BE')
+                        : mb_convert_encoding(preg_replace('/^\xFF\xFE/', '', $text), 'UTF-8', 'UTF-16LE');
+                }
+            }
+
+            return '';
+        }
+
+        $text = explode("\x00", $rest, 2)[0];
+
+        return $encoding === 0 ? mb_convert_encoding($text, 'UTF-8', 'ISO-8859-1') : $text;
     }
 
     private function frame(int $version, string $id, string $body): string

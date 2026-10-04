@@ -24,6 +24,14 @@
           Details
         </TabButton>
         <TabButton
+          id="editSongTabCredits"
+          :selected="currentTab === 'credits'"
+          aria-controls="editSongPanelCredits"
+          @click="currentTab = 'credits'"
+        >
+          Credits
+        </TabButton>
+        <TabButton
           id="editSongTabLyrics"
           :selected="currentTab === 'lyrics'"
           aria-controls="editSongPanelLyrics"
@@ -41,6 +49,14 @@
           aria-labelledby="editSongTabDetails"
           class="space-y-5"
         >
+          <EditSongMusicBrainzLookup
+            v-if="editingOnlyOneSong"
+            :title="data.title"
+            :artist="data.artist_name"
+            :album="data.album_name"
+            @apply="applyMatch"
+          />
+
           <FormRow v-if="editingOnlyOneSong">
             <template #label>Title</template>
             <TextInput v-model="data.title" v-koel-focus data-testid="title-input" name="title" title="Title" />
@@ -132,6 +148,15 @@
 
         <TabPanel
           v-if="editingOnlyOneSong"
+          v-show="currentTab === 'credits'"
+          id="editSongPanelCredits"
+          aria-labelledby="editSongTabCredits"
+        >
+          <SongCreditList :credits />
+        </TabPanel>
+
+        <TabPanel
+          v-if="editingOnlyOneSong"
           v-show="currentTab === 'lyrics'"
           id="editSongPanelLyrics"
           aria-labelledby="editSongTabLyrics"
@@ -162,6 +187,9 @@ import { genres } from '@/config/genres'
 import { useForm } from '@/composables/useForm'
 import { useBranding } from '@/composables/useBranding'
 
+import SongCreditList from '@/components/playable/SongCreditList.vue'
+import type { MusicBrainzMatch } from '@/components/playable/EditSongMusicBrainzLookup.vue'
+import EditSongMusicBrainzLookup from '@/components/playable/EditSongMusicBrainzLookup.vue'
 import Btn from '@/components/ui/form/Btn.vue'
 import TextInput from '@/components/ui/form/TextInput.vue'
 import TextArea from '@/components/ui/form/TextArea.vue'
@@ -221,15 +249,41 @@ if (allSongsAreInSameAlbum && allSongsAreFromSameArtist && songs[0].album_artist
   initialValues.album_artist_name = allSongsShareSameValue('album_artist_name') ? songs[0].album_artist_name : ''
 }
 
+// Identifiers and credits of a recording picked from MusicBrainz, sent along with the form.
+const musicBrainzData = ref<
+  Pick<SongUpdateData, 'mbid' | 'album_mbid' | 'artist_mbid' | 'albumartist_mbid' | 'credits'>
+>({})
+const credits = ref<SongCredit[]>(songs[0].credits ?? [])
+
 const { data, isPristine, handleSubmit } = useForm<SongUpdateData>({
   initialValues,
-  onSubmit: async data => await songStore.updateSongs(songs, data),
+  onSubmit: async data => await songStore.updateSongs(songs, { ...data, ...musicBrainzData.value }),
   onSuccess: (result: SongUpdateResult) => {
     toastSuccess(`Updated ${pluralize(songs, 'song')}.`)
     eventBus.emit('SONGS_UPDATED', result)
     close()
   },
 })
+
+const applyMatch = ({
+  url: _url,
+  mbid,
+  album_mbid,
+  artist_mbid,
+  albumartist_mbid,
+  credits: matchCredits,
+  ...match
+}: MusicBrainzMatch) => {
+  // Only overwrite with what MusicBrainz knows; keep the form's value for anything it lacks.
+  Object.entries(match).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== '') {
+      ;(data as Record<string, unknown>)[key] = value
+    }
+  })
+
+  musicBrainzData.value = { mbid, album_mbid, artist_mbid, albumartist_mbid, credits: matchCredits }
+  credits.value = matchCredits ?? []
+}
 
 const displayedTitle = computed(() => (editingOnlyOneSong ? data.title : `${songs.length} songs selected`))
 

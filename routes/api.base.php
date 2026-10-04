@@ -75,6 +75,7 @@ use App\Http\Controllers\API\RateAlbumController;
 use App\Http\Controllers\API\RateArtistController;
 use App\Http\Controllers\API\RatePodcastController;
 use App\Http\Controllers\API\RateSongController;
+use App\Http\Controllers\API\RecordingCreditsController;
 use App\Http\Controllers\API\RegisterPlayController;
 use App\Http\Controllers\API\ResetPasswordController;
 use App\Http\Controllers\API\ScrobbleController;
@@ -84,6 +85,8 @@ use App\Http\Controllers\API\Settings\UpdateAiSettingsController;
 use App\Http\Controllers\API\Settings\UpdateBrandingController;
 use App\Http\Controllers\API\Settings\UpdateMediaPathController;
 use App\Http\Controllers\API\SongController;
+use App\Http\Controllers\API\SongCreditNameController;
+use App\Http\Controllers\API\SongMusicBrainzLookupController;
 use App\Http\Controllers\API\SongSearchController;
 use App\Http\Controllers\API\ThemeController;
 use App\Http\Controllers\API\ToggleLikeSongController;
@@ -266,6 +269,12 @@ Route::prefix('api')
             }
 
             // Media information routes
+            Route::get('musicbrainz/recordings/{mbid}/credits', RecordingCreditsController::class)->where(
+                'mbid',
+                '[0-9a-f-]{36}',
+            );
+            Route::get('song-credits/names', SongCreditNameController::class);
+            Route::get('musicbrainz/songs', SongMusicBrainzLookupController::class);
             Route::get('albums/{album}/information', FetchAlbumInformationController::class);
             Route::get('albums/{album}/genre-suggestions', [AlbumGenreController::class, 'suggest']);
             Route::post('albums/{album}/genres', [AlbumGenreController::class, 'store']);

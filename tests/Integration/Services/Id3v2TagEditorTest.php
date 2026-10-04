@@ -3,6 +3,7 @@
 namespace Tests\Integration\Services;
 
 use App\Models\Song;
+use App\Models\SongCredit;
 use App\Services\SongTagWriter;
 use getID3;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -88,6 +89,48 @@ class Id3v2TagEditorTest extends TestCase
         self::assertSame(["Zeile 1\nZeile 2"], $tags['unsynchronised_lyric']);
         self::assertArrayNotHasKey('synchronised_lyric', $info['id3v2']);
         self::assertArrayNotHasKey('SYLT', $info['id3v2']);
+    }
+
+    #[Test]
+    #[DataProvider('provideVersions')]
+    public function writeMbidsAndCredits(int $version): void
+    {
+        $this->path = $this->makeFile(
+            $version,
+            [
+                $this->frame($version, 'UFID', "http://musicbrainz.org\x00old-recording"),
+                $this->frame($version, 'TXXX', "\x00MusicBrainz Album Id\x00old-album"),
+                $this->frame($version, 'TXXX', "\x00Other\x00kept"),
+                $this->frame($version, 'TCOM', "\x00Old Composer"),
+            ],
+            64,
+        );
+
+        $song = Song::factory()->createOne(['path' => $this->path]);
+
+        self::assertTrue(app(SongTagWriter::class)->write($song, [
+            'mbid' => 'new-recording',
+            'album_mbid' => 'new-album',
+            'artist_mbid' => 'new-artist',
+            'credits' => [
+                new SongCredit(['role' => 'composer', 'name' => 'Ludwig Köhler']),
+                new SongCredit(['role' => 'composer', 'name' => 'Anna']),
+                new SongCredit(['role' => 'lyricist', 'name' => 'Lyra']),
+                new SongCredit(['role' => 'producer', 'name' => 'Pat']),
+                new SongCredit(['role' => 'instrument', 'name' => 'Gil', 'instrument' => 'guitar']),
+            ],
+        ]));
+
+        $info = (new getID3())->analyze($this->path);
+        $tags = $info['tags']['id3v2'];
+
+        self::assertSame('new-recording', $info['id3v2']['UFID'][0]['data']);
+        self::assertCount(1, $info['id3v2']['UFID']);
+        self::assertSame('new-album', $tags['text']['MusicBrainz Album Id'] ?? null);
+        self::assertSame('new-artist', $tags['text']['MusicBrainz Artist Id'] ?? null);
+        self::assertSame('kept', $tags['text']['Other'] ?? null);
+        self::assertSame(['Ludwig Köhler', 'Anna'], array_map('trim', $tags['composer']));
+        self::assertSame(['Lyra'], $tags['lyricist']);
     }
 
     #[Test]

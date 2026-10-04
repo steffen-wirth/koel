@@ -102,8 +102,10 @@ const { get: lsGet, set: lsSet } = useLocalStorage()
 
 const loading = ref(false)
 const filtersOpen = ref(false)
-const filters = reactive<SongFilters>({ genre: '', formats: [] })
-const activeFilterCount = computed(() => (filters.genre ? 1 : 0) + (filters.formats.length ? 1 : 0))
+const filters = reactive<SongFilters>({ genre: '', formats: [], credit: '', credit_role: '' })
+const activeFilterCount = computed(
+  () => (filters.genre ? 1 : 0) + (filters.formats.length ? 1 : 0) + (filters.credit ? 1 : 0),
+)
 let sortField: MaybeArray<PlayableListSortField> = lsGet<PlayableListSortField>('all-songs-sort-field', 'title')!
 let sortOrder: SortOrder = lsGet<SortOrder>('all-songs-sort-order', 'asc')!
 
@@ -125,6 +127,8 @@ const fetchSongs = async () => {
       cursor: cursor.value,
       genre: filters.genre || undefined,
       formats: filters.formats,
+      credit: filters.credit || undefined,
+      credit_role: filters.credit ? filters.credit_role || undefined : undefined,
     })
   } catch (error: any) {
     useErrorHandler().handleHttpError(error)

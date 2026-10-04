@@ -127,11 +127,12 @@ class SongRepository extends Repository implements ScoutableRepository
         ?User $scopedUser = null,
         ?string $genre = null,
         array $formats = [],
+        ?array $credit = null,
     ): Paginator|CursorPaginator {
         return $strategy->apply(
             Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
                 ->withUserContext()
-                ->filterBy($genre, $formats)
+                ->filterBy($genre, $formats, $credit)
                 ->sort($sortColumns, $sortDirection),
             idColumn: 'songs.id',
             perPage: 50,
@@ -170,10 +171,11 @@ class SongRepository extends Repository implements ScoutableRepository
         ?User $scopedUser = null,
         ?string $genre = null,
         array $formats = [],
+        ?array $credit = null,
     ): Collection {
         return Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
             ->withUserContext()
-            ->filterBy($genre, $formats)
+            ->filterBy($genre, $formats, $credit)
             ->sort($sortColumns, $sortDirection)
             ->limit($limit)
             ->get();
@@ -316,10 +318,11 @@ class SongRepository extends Repository implements ScoutableRepository
         ?User $scopedUser = null,
         ?string $genre = null,
         array $formats = [],
+        ?array $credit = null,
     ): Collection {
         return Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
             ->withUserContext()
-            ->filterBy($genre, $formats)
+            ->filterBy($genre, $formats, $credit)
             ->inRandomOrder()
             ->limit($limit)
             ->get();

@@ -49,6 +49,9 @@ class SongService
             $data->lyrics = $data->lyrics ?: '';
             $data->year = $data->year ?: null;
             $data->genre = $data->genre ?: '';
+        } else {
+            // Identifiers and credits belong to one specific recording.
+            $data->mbid = $data->albumMbid = $data->artistMbid = $data->albumArtistMbid = $data->credits = null;
         }
 
         return DB::transaction(function () use ($ids, $data): SongUpdateResult {
@@ -157,11 +160,48 @@ class SongService
             $song->syncGenres($data->genre);
         }
 
+        $this->applyMusicBrainzData($song, $artist, $albumArtist, $album, $data);
+
         $song = $this->songRepository->getOne($song->id);
 
-        $this->tagWriter->write($song, array_diff_assoc($this->getFileTags($song), $originalTags));
+        $tags = array_diff_assoc($this->getFileTags($song), $originalTags);
+
+        if ($data->credits !== null) {
+            $tags['credits'] = $song->credits->all();
+        }
+
+        $this->tagWriter->write($song, $tags);
 
         return $song;
+    }
+
+    private function applyMusicBrainzData(
+        Song $song,
+        Artist $artist,
+        Artist $albumArtist,
+        Album $album,
+        SongUpdateData $data,
+    ): void {
+        // The user explicitly picked a recording, so its identifier replaces the song's own one.
+        // Artists and albums are shared by many songs; their identifiers are only filled in when missing.
+        if ($data->mbid) {
+            $song->forceFill(['mbid' => $data->mbid])->save();
+        }
+
+        $artist->setMbidIfMissing($data->artistMbid);
+        $albumArtist->setMbidIfMissing($data->albumArtistMbid);
+        $album->setMbidIfMissing($data->albumMbid);
+
+        if ($data->credits !== null) {
+            $song->credits()->delete();
+            $song->credits()->createMany(array_map(static fn (array $credit) => [
+                'role' => $credit['role'],
+                'name' => $credit['name'],
+                'instrument' => $credit['instrument'] ?? null,
+                'artist_mbid' => $credit['artist_mbid'] ?? null,
+            ], $data->credits));
+            $song->unsetRelation('credits');
+        }
     }
 
     /** @return array<string, string|int|null> */
@@ -177,6 +217,10 @@ class SongService
             'year' => $song->year,
             'genre' => $song->genre,
             'lyrics' => $song->lyrics,
+            'mbid' => $song->mbid,
+            'album_mbid' => $song->album?->mbid,
+            'artist_mbid' => $song->artist?->mbid,
+            'albumartist_mbid' => $song->album_artist?->mbid,
         ];
     }
 
