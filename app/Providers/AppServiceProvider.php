@@ -47,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(!app()->isProduction());
 
         self::enableOnDeleteCascadeForSqliteConnections($db);
+        self::mapMariaDbToMysqlForTntSearch();
 
         // disable wrapping JSON resource in a `data` key
         JsonResource::withoutWrapping();
@@ -117,6 +118,18 @@ class AppServiceProvider extends ServiceProvider
 
         if (class_exists('Laravel\Tinker\TinkerServiceProvider')) {
             $this->app->register('Laravel\Tinker\TinkerServiceProvider');
+        }
+    }
+
+    /**
+     * TNTSearch builds its index connection from the default database connection, but only knows the
+     * "mysql" driver, not Laravel's "mariadb" one. They are compatible, so indexing a model on a MariaDB
+     * connection (e.g. when saving a playlist) would fail with "Unsupported driver [mariadb]".
+     */
+    private static function mapMariaDbToMysqlForTntSearch(): void
+    {
+        if (config('database.connections.' . config('database.default') . '.driver') === 'mariadb') {
+            config(['scout.tntsearch.driver' => 'mysql']);
         }
     }
 
