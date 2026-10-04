@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Facades\Dispatcher;
 use App\Http\Resources\SongResource;
+use App\Jobs\AnalyzeSongsJob;
 use App\Jobs\DeleteSongFilesJob;
 use App\Models\Album;
 use App\Models\Artist;
@@ -17,6 +18,7 @@ use Tests\TestCase;
 
 use function Tests\create_admin;
 use function Tests\create_user;
+use function Tests\test_path;
 
 class SongTest extends TestCase
 {
@@ -53,6 +55,50 @@ class SongTest extends TestCase
             $ids($this->getAs('api/songs?cursor=&credit=Ada')),
         );
         self::assertSame([$composed->id], $ids($this->getAs('api/songs?cursor=&credit=Ada&credit_role=composer')));
+    }
+
+    #[Test]
+    public function indexFilteredByBpmRange(): void
+    {
+        $slow = Song::factory()->create(['bpm' => 80]);
+        $mid = Song::factory()->create(['bpm' => 120]);
+        $fast = Song::factory()->create(['bpm' => 160]);
+        Song::factory()->create(['bpm' => null]);
+
+        $ids = static fn ($response) => collect($response->json('data'))->pluck('id')->sort()->values()->all();
+        $sorted = static fn (array $songs) => collect($songs)->pluck('id')->sort()->values()->all();
+
+        self::assertSame($sorted([$mid, $fast]), $ids($this->getAs('api/songs?cursor=&bpm_min=100')));
+        self::assertSame($sorted([$slow, $mid]), $ids($this->getAs('api/songs?cursor=&bpm_max=120')));
+        self::assertSame([$mid->id], $ids($this->getAs('api/songs?cursor=&bpm_min=100&bpm_max=130')));
+        self::assertSame(120, $this->getAs('api/songs?cursor=&bpm_min=100&bpm_max=130')->json('data.0.bpm'));
+    }
+
+    #[Test]
+    public function analyzeSongs(): void
+    {
+        config([
+            'koel.audio_analysis.python' => '/bin/sh',
+            'koel.audio_analysis.script' => test_path('songs/full.mp3'),
+        ]);
+
+        $song = Song::factory()->create();
+        Dispatcher::expects('dispatch')->with(AnalyzeSongsJob::class)->once();
+
+        $this
+            ->postAs('api/songs/analyze', ['songs' => [$song->id]], create_admin())
+            ->assertAccepted()
+            ->assertJson(['queued' => 1]);
+    }
+
+    #[Test]
+    public function analyzeIsUnavailableWithoutThePythonEnvironment(): void
+    {
+        config(['koel.audio_analysis.python' => '/nonexistent/python']);
+
+        $this->postAs('api/songs/analyze', ['songs' => [Song::factory()->create()->id]], create_admin())->assertStatus(
+            503,
+        );
     }
 
     #[Test]

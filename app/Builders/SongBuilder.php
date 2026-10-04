@@ -5,6 +5,7 @@ namespace App\Builders;
 use App\Builders\Concerns\CanScopeByUser;
 use App\Facades\License;
 use App\Models\Song;
+use App\Values\Song\SongFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,8 @@ class SongBuilder extends FavoriteableBuilder
         'file_created_at' => 'songs.file_created_at',
         'disc' => 'songs.disc',
         'year' => 'songs.year',
+        'bpm' => 'songs.bpm',
+        'musical_key' => 'songs.musical_key',
         'artist_name' => 'songs.artist_name',
         'album_name' => 'songs.album_name',
         'podcast_title' => 'podcasts.title',
@@ -40,6 +43,8 @@ class SongBuilder extends FavoriteableBuilder
         'songs.track',
         'songs.length',
         'songs.year',
+        'songs.bpm',
+        'songs.musical_key',
         'songs.created_at',
         'songs.file_created_at',
         'songs.artist_name',
@@ -125,30 +130,45 @@ class SongBuilder extends FavoriteableBuilder
         ]);
     }
 
-    /**
-     * Narrow down the songs by genre name, file format and/or credited person.
-     *
-     * @param list<string> $formats File extensions, without the leading dot
-     * @param ?array{role: ?string, name: string} $credit Songs credited to the named person, in the given role if any
-     */
-    public function filterBy(?string $genre = null, array $formats = [], ?array $credit = null): self
+    public function filterBy(?SongFilters $filters): self
     {
+        if (!$filters) {
+            return $this;
+        }
+
         return $this
-            ->when($credit, static fn (self $query) => $query->whereHas('credits', static fn (Builder $credits) => $credits->where(
-                'song_credits.name',
-                $credit['name'],
-            )->when($credit['role'], static fn (Builder $q) => $q->where('song_credits.role', $credit['role']))))
-            ->when($genre, static fn (self $query) => $query->whereHas('genres', static fn (Builder $genres) => $genres->where(
-                'genres.name',
-                $genre,
-            )))
-            ->when($formats, static fn (self $query) => $query->where(static function (Builder $query) use (
-                $formats,
-            ): void {
+            ->when($filters->genre, static fn (
+                self $query,
+                string $genre,
+            ) => $query->whereHas('genres', static fn (Builder $genres) => $genres->where('genres.name', $genre)))
+            ->when($filters->formats, static fn (
+                self $query,
+                array $formats,
+            ) => $query->where(static function (Builder $query) use ($formats): void {
                 foreach ($formats as $format) {
                     $query->orWhereRaw('LOWER(songs.path) LIKE ?', ['%.' . Str::lower($format)]);
                 }
-            }));
+            }))
+            ->when($filters->creditName, static fn (
+                self $query,
+                string $name,
+            ) => $query->whereHas('credits', static fn (Builder $credits) => $credits->where(
+                'song_credits.name',
+                $name,
+            )->when($filters->creditRole, static fn (Builder $q, string $role) => $q->where(
+                'song_credits.role',
+                $role,
+            ))))
+            ->when($filters->bpmMin !== null, static fn (self $query) => $query->where(
+                'songs.bpm',
+                '>=',
+                $filters->bpmMin,
+            ))
+            ->when($filters->bpmMax !== null, static fn (self $query) => $query->where(
+                'songs.bpm',
+                '<=',
+                $filters->bpmMax,
+            ));
     }
 
     public function withUserContext(

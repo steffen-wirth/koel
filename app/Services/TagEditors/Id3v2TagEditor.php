@@ -19,6 +19,8 @@ class Id3v2TagEditor
         'track' => 'TRCK',
         'disc' => 'TPOS',
         'genre' => 'TCON',
+        'bpm' => 'TBPM',
+        'musical_key' => 'TKEY',
     ];
 
     /** MusicBrainz identifiers kept in TXXX frames, by their conventional description. */

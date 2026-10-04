@@ -40,6 +40,8 @@ export const playableListColumnConfig = {
     'track',
     'genre',
     'year',
+    'bpm',
+    'key',
     'file_created_at',
     'title',
     'artist',

@@ -22,6 +22,7 @@ use App\Repositories\Contracts\ScoutableRepository;
 use App\Values\SmartPlaylist\SmartPlaylistQueryModifier as QueryModifier;
 use App\Values\SmartPlaylist\SmartPlaylistRule as Rule;
 use App\Values\SmartPlaylist\SmartPlaylistRuleGroup as RuleGroup;
+use App\Values\Song\SongFilters;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -125,14 +126,12 @@ class SongRepository extends Repository implements ScoutableRepository
         string $sortDirection,
         PaginationStrategy $strategy,
         ?User $scopedUser = null,
-        ?string $genre = null,
-        array $formats = [],
-        ?array $credit = null,
+        ?SongFilters $filters = null,
     ): Paginator|CursorPaginator {
         return $strategy->apply(
             Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
                 ->withUserContext()
-                ->filterBy($genre, $formats, $credit)
+                ->filterBy($filters)
                 ->sort($sortColumns, $sortDirection),
             idColumn: 'songs.id',
             perPage: 50,
@@ -169,13 +168,11 @@ class SongRepository extends Repository implements ScoutableRepository
         string $sortDirection,
         int $limit = self::LIST_SIZE_LIMIT,
         ?User $scopedUser = null,
-        ?string $genre = null,
-        array $formats = [],
-        ?array $credit = null,
+        ?SongFilters $filters = null,
     ): Collection {
         return Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
             ->withUserContext()
-            ->filterBy($genre, $formats, $credit)
+            ->filterBy($filters)
             ->sort($sortColumns, $sortDirection)
             ->limit($limit)
             ->get();
@@ -313,16 +310,11 @@ class SongRepository extends Repository implements ScoutableRepository
     }
 
     /** @return Collection<int, Song> */
-    public function getRandom(
-        int $limit,
-        ?User $scopedUser = null,
-        ?string $genre = null,
-        array $formats = [],
-        ?array $credit = null,
-    ): Collection {
+    public function getRandom(int $limit, ?User $scopedUser = null, ?SongFilters $filters = null): Collection
+    {
         return Song::query(type: PlayableType::SONG, user: $scopedUser ?? $this->auth->user())
             ->withUserContext()
-            ->filterBy($genre, $formats, $credit)
+            ->filterBy($filters)
             ->inRandomOrder()
             ->limit($limit)
             ->get();

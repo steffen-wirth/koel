@@ -62,6 +62,8 @@
           <template v-else>{{ playable.genre || '—' }}</template>
         </span>
         <span v-if="shouldShowColumn('year')" class="year">{{ playable.year || '—' }}</span>
+        <span v-if="shouldShowColumn('bpm')" class="bpm">{{ playable.bpm || '—' }}</span>
+        <span v-if="shouldShowColumn('key')" class="key">{{ playable.musical_key || '—' }}</span>
         <span v-if="shouldShowColumn('file_created_at')" class="file-created">
           {{ playable.file_created_at ? new Date(playable.file_created_at).toLocaleDateString() : '—' }}
         </span>

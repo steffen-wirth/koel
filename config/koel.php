@@ -124,6 +124,21 @@ return [
         ],
     ],
 
+    /*
+     |--------------------------------------------------------------------------
+     | Audio analysis
+     |--------------------------------------------------------------------------
+     |
+     | BPM and musical key are detected by scripts/analyze-audio.py, which needs Python with Essentia
+     | (`python3 -m venv storage/app/analysis-venv && storage/app/analysis-venv/bin/pip install essentia`).
+     |
+     */
+    'audio_analysis' => [
+        'python' => env('AUDIO_ANALYSIS_PYTHON', storage_path('app/analysis-venv/bin/python')),
+        'script' => base_path('scripts/analyze-audio.py'),
+        'timeout' => (int) env('AUDIO_ANALYSIS_TIMEOUT', 300),
+    ],
+
     'services' => [
         'musicbrainz' => [
             'enabled' => env('USE_MUSICBRAINZ', true),

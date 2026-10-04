@@ -19,6 +19,8 @@ class FlacTagEditor
         'year' => ['DATE', 'YEAR'],
         'genre' => ['GENRE'],
         'lyrics' => ['LYRICS', 'UNSYNCEDLYRICS'],
+        'bpm' => ['BPM'],
+        'musical_key' => ['INITIALKEY', 'KEY'],
         'mbid' => ['MUSICBRAINZ_TRACKID'],
         'album_mbid' => ['MUSICBRAINZ_ALBUMID'],
         'artist_mbid' => ['MUSICBRAINZ_ARTISTID'],

@@ -227,6 +227,8 @@ interface Song extends BasePlayable {
   lyrics: string
   is_public: boolean
   is_external: boolean
+  bpm?: number | null
+  musical_key?: string | null
   mbid?: string | null
   credits?: SongCredit[]
   file_created_at?: string | null
@@ -697,6 +699,8 @@ type PlayableListSortField =
       | 'artist_name'
       | 'genre'
       | 'year'
+      | 'bpm'
+      | 'musical_key'
       | 'created_at'
       | 'file_created_at'
       | 'rating'
@@ -784,6 +788,9 @@ interface SongFilters {
   /** Name of a credited person (composer, producer, …) */
   credit?: string
   credit_role?: string
+  /** Inclusive BPM range; empty means no limit */
+  bpm_min?: number | '' | null
+  bpm_max?: number | '' | null
 }
 
 interface Genre {
@@ -818,6 +825,8 @@ type PlayableListColumnName =
   | 'rating'
   | 'favorite'
   | 'year'
+  | 'bpm'
+  | 'key'
   | 'genre'
   | 'playlist_collaborator'
   | 'playlist_added_at'

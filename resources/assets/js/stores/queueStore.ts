@@ -13,6 +13,8 @@ const toFilterQuery = (filters: Partial<SongFilters>) => {
       formats: filters.formats,
       credit: filters.credit || undefined,
       credit_role: filters.credit ? filters.credit_role || undefined : undefined,
+      bpm_min: filters.bpm_min === '' ? undefined : (filters.bpm_min ?? undefined),
+      bpm_max: filters.bpm_max === '' ? undefined : (filters.bpm_max ?? undefined),
     }),
   ).toString()
 

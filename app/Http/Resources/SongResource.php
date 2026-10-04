@@ -127,6 +127,8 @@ class SongResource extends JsonResource
             'disc' => $this->unless($embedding, $this->song->disc),
             'genre' => $this->unless($embedding, $this->song->genre),
             'year' => $this->unless($embedding, $this->song->year),
+            'bpm' => $this->unless($embedding, $this->song->bpm),
+            'musical_key' => $this->unless($embedding, $this->song->musical_key),
             'is_public' => $this->unless($embedding, $this->song->is_public),
             'created_at' => $this->unless($embedding, $this->song->created_at),
             'file_created_at' => $this->unless($embedding, $this->song->file_created_at),

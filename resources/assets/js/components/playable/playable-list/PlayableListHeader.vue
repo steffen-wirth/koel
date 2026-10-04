@@ -121,6 +121,34 @@
       </template>
     </span>
     <span
+      v-if="shouldShowColumn('bpm')"
+      class="bpm"
+      data-testid="header-bpm"
+      role="button"
+      title="Sort by BPM"
+      @click="sort('bpm')"
+    >
+      BPM
+      <template v-if="config.sortable">
+        <Icon v-if="sortField === 'bpm' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
+        <Icon v-if="sortField === 'bpm' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
+      </template>
+    </span>
+    <span
+      v-if="shouldShowColumn('key')"
+      class="key"
+      data-testid="header-key"
+      role="button"
+      title="Sort by key"
+      @click="sort('musical_key')"
+    >
+      Key
+      <template v-if="config.sortable">
+        <Icon v-if="sortField === 'musical_key' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
+        <Icon v-if="sortField === 'musical_key' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
+      </template>
+    </span>
+    <span
       v-if="shouldShowColumn('file_created_at')"
       class="file-created"
       data-testid="header-file-created"

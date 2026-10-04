@@ -14,8 +14,9 @@ describe('songFilterPanel.vue', () => {
     },
   })
 
-  const renderComponent = (filters: SongFilters = { genre: '', formats: [] }) =>
-    h.render(Component, { props: { modelValue: filters } })
+  const renderComponent = (
+    filters: SongFilters = { genre: '', formats: [], credit: '', credit_role: '', bpm_min: '', bpm_max: '' },
+  ) => h.render(Component, { props: { modelValue: filters } })
 
   it('only offers the genres of the library', async () => {
     renderComponent()
@@ -25,7 +26,7 @@ describe('songFilterPanel.vue', () => {
   })
 
   it('selects a genre and unselects it when picked again', async () => {
-    const filters: SongFilters = { genre: '', formats: [] }
+    const filters: SongFilters = { genre: '', formats: [], credit: '', credit_role: '', bpm_min: '', bpm_max: '' }
     renderComponent(filters)
 
     await userEvent.click(await screen.findByRole('option', { name: 'Zydeco' }))
@@ -36,7 +37,7 @@ describe('songFilterPanel.vue', () => {
   })
 
   it('toggles formats', async () => {
-    const filters: SongFilters = { genre: '', formats: [] }
+    const filters: SongFilters = { genre: '', formats: [], credit: '', credit_role: '', bpm_min: '', bpm_max: '' }
     renderComponent(filters)
 
     await userEvent.click(screen.getByLabelText('FLAC'))
@@ -48,12 +49,12 @@ describe('songFilterPanel.vue', () => {
   })
 
   it('resets the filters', async () => {
-    const filters: SongFilters = { genre: 'Zydeco', formats: ['flac'] }
+    const filters: SongFilters = { genre: 'Zydeco', formats: ['flac'], bpm_min: 100, bpm_max: '' }
     renderComponent(filters)
 
     await userEvent.click(screen.getByRole('button', { name: 'Reset filters' }))
 
-    expect(filters).toEqual({ genre: '', formats: [], credit: '', credit_role: '' })
+    expect(filters).toEqual({ genre: '', formats: [], credit: '', credit_role: '', bpm_min: '', bpm_max: '' })
   })
 
   it('offers no reset without filters', () => {

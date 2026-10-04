@@ -36,6 +36,8 @@ class ScanInformation implements Arrayable
         public ?string $mimeType,
         public ?int $fileSize,
         public ?int $fileCreatedAt = null,
+        public ?int $bpm = null,
+        public ?string $musicalKey = null,
     ) {}
 
     public static function fromGetId3Info(array $info, string $path): self
@@ -95,6 +97,8 @@ class ScanInformation implements Arrayable
             mimeType: Str::lower(Arr::get($info, 'mime_type')) ?: 'audio/mpeg',
             fileSize: File::size($path),
             fileCreatedAt: get_file_creation_time($path),
+            bpm: (int) round((float) self::getTag($tags, ['bpm', 'beats_per_minute'])) ?: null,
+            musicalKey: self::readKey($tags),
         );
     }
 
@@ -120,6 +124,8 @@ class ScanInformation implements Arrayable
         ?string $mimeType = null,
         ?int $fileSize = null,
         ?int $fileCreatedAt = null,
+        ?int $bpm = null,
+        ?string $musicalKey = null,
     ): self {
         return new self(
             title: $title,
@@ -143,7 +149,17 @@ class ScanInformation implements Arrayable
             mimeType: $mimeType,
             fileSize: $fileSize,
             fileCreatedAt: $fileCreatedAt,
+            bpm: $bpm,
+            musicalKey: $musicalKey,
         );
+    }
+
+    /** The key as written in the tag, if it is a plausible one (e.g. "Am", "F#m", "8A"). */
+    private static function readKey(array $tags): ?string
+    {
+        $key = trim((string) self::getTag($tags, ['initial_key', 'initialkey', 'key']));
+
+        return $key !== '' && mb_strlen($key) <= 8 ? $key : null;
     }
 
     private static function getTag(array $arr, string|array $keys, $default = ''): mixed
@@ -183,6 +199,8 @@ class ScanInformation implements Arrayable
             'mtime' => $this->mTime,
             'mime_type' => $this->mimeType,
             'file_size' => $this->fileSize,
+            'bpm' => $this->bpm,
+            'musical_key' => $this->musicalKey,
             'file_created_at' => $this->fileCreatedAt,
         ];
     }

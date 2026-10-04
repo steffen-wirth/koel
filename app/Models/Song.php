@@ -64,6 +64,8 @@ use PhanAn\Poddle\Values\EpisodeMetadata;
  * @property int $owner_id
  * @property int $track
  * @property ?int $year
+ * @property ?int $bpm Beats per minute, detected by the audio analysis or read from the file
+ * @property ?string $musical_key The key, e.g. "C", "F#m"
  * @property ?int $file_size The size in bytes of the song file, if available.
  * @property string $id
  * @property string $lyrics
@@ -118,6 +120,7 @@ class Song extends Model implements AuditableContract, Favoriteable, Embeddable,
             'track' => 'int',
             'disc' => 'int',
             'year' => 'int',
+            'bpm' => 'int',
             'is_public' => 'boolean',
             'storage' => SongStorageCast::class,
             'episode_metadata' => EpisodeMetadataCast::class,

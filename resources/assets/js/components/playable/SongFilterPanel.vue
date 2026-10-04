@@ -15,16 +15,23 @@
       </label>
     </fieldset>
 
+    <SongBpmFilter v-model:min="filters.bpm_min" v-model:max="filters.bpm_max" />
+
     <SongCreditFilter v-model:role="filters.credit_role" v-model:name="filters.credit" />
 
-    <Btn v-if="filters.genre || filters.formats.length || filters.credit" variant="ghost" @click.prevent="reset"
+    <Btn
+      v-if="filters.genre || filters.formats.length || filters.credit || hasBpmRange"
+      variant="ghost"
+      @click.prevent="reset"
       >Reset filters</Btn
     >
   </div>
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import Btn from '@/components/ui/form/Btn.vue'
+import SongBpmFilter from '@/components/playable/SongBpmFilter.vue'
 import SongCreditFilter from '@/components/playable/SongCreditFilter.vue'
 import GenrePicker from '@/components/genre/GenrePicker.vue'
 
@@ -38,10 +45,14 @@ const formats: { value: SongFormat; label: string }[] = [
 // Picking the active genre again clears it.
 const toggleGenre = (genre: string) => (filters.value.genre = genre === filters.value.genre ? '' : genre)
 
+const hasBpmRange = computed(() => filters.value.bpm_min !== '' || filters.value.bpm_max !== '')
+
 const reset = () => {
   filters.value.genre = ''
   filters.value.formats = []
   filters.value.credit = ''
   filters.value.credit_role = ''
+  filters.value.bpm_min = ''
+  filters.value.bpm_max = ''
 }
 </script>

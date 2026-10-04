@@ -307,6 +307,13 @@ class SongService
             Arr::forget($data, 'file_created_at');
         }
 
+        // Files without these tags must not erase the values detected by the audio analysis.
+        foreach (['bpm', 'musical_key'] as $analysed) {
+            if (Arr::get($data, $analysed) === null) {
+                Arr::forget($data, $analysed);
+            }
+        }
+
         $artist = $this->resolveArtist($config->owner, Arr::get($data, 'artist'));
 
         $albumArtist = Arr::get($data, 'albumartist')

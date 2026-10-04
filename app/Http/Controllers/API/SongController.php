@@ -36,9 +36,7 @@ class SongController extends Controller
             sortDirection: $request->order ?: 'asc',
             strategy: PaginationStrategyResolver::resolve($request),
             scopedUser: $this->user,
-            genre: $request->genre,
-            formats: $request->formats ?? [],
-            credit: $request->credit(),
+            filters: $request->songFilters(),
         ));
     }
 

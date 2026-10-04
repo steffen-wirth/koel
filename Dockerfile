@@ -30,6 +30,13 @@ RUN apt-get update \
   && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && /usr/sbin/locale-gen \
   && mkdir /music && chown www-data:www-data /music
 
+# BPM and key detection (scripts/analyze-audio.py). Kept outside storage/ so volumes don't hide it.
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends python3 python3-venv \
+  && python3 -m venv /opt/analysis-venv \
+  && /opt/analysis-venv/bin/pip install --no-cache-dir essentia \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/koel.ini /usr/local/etc/php/conf.d/koel.ini
 COPY docker/koel-entrypoint docker/koel-init /usr/local/bin/
@@ -54,6 +61,7 @@ RUN php artisan package:discover --ansi \
 USER root
 
 ENV FFMPEG_PATH=/usr/bin/ffmpeg \
+    AUDIO_ANALYSIS_PYTHON=/opt/analysis-venv/bin/python \
     MEDIA_PATH=/music \
     STREAMING_METHOD=x-sendfile \
     LANG=en_US.UTF-8 \

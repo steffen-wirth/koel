@@ -7,6 +7,7 @@ use App\Http\Controllers\API\AiController;
 use App\Http\Controllers\API\AlbumController;
 use App\Http\Controllers\API\AlbumGenreController;
 use App\Http\Controllers\API\AlbumSongController;
+use App\Http\Controllers\API\AnalyzeSongsController;
 use App\Http\Controllers\API\Artist\ArtistAlbumController;
 use App\Http\Controllers\API\Artist\ArtistController;
 use App\Http\Controllers\API\Artist\ArtistSongController;
@@ -178,6 +179,7 @@ Route::prefix('api')
             // Fetch songs under several folder paths (may include multiple nested levels).
             // This is a POST request because the folder paths may be long.
             Route::post('songs/by-folders', FetchRecursiveFolderSongsController::class);
+            Route::post('songs/analyze', AnalyzeSongsController::class);
             Route::post('songs/by-ids', FetchSongsByIdsController::class);
 
             // Fetch songs **directly** in a specific folder path (or the media root if no path is specified)

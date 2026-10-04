@@ -121,6 +121,7 @@
     </MenuItem>
 
     <MenuItem v-if="allowEdit" @click="openEditForm">Edit…</MenuItem>
+    <MenuItem v-if="allowEdit" @click="analyzeAudio">Analyze BPM &amp; Key</MenuItem>
     <MenuItem v-if="downloadable" @click="download">Download</MenuItem>
     <MenuItem v-if="canToggleOffline" @click="toggleOffline">
       {{ allCached ? 'Remove Offline Versions' : 'Make Available Offline' }}
@@ -165,6 +166,7 @@ import { queueStore } from '@/stores/queueStore'
 import { playableStore } from '@/stores/playableStore'
 import { useDownload } from '@/composables/useDownload'
 import { useRouter } from '@/composables/useRouter'
+import { useAudioAnalysis } from '@/composables/useAudioAnalysis'
 import { useMessageToaster } from '@/composables/useMessageToaster'
 import { useDialogBox } from '@/composables/useDialogBox'
 import { usePlaylistContentManagement } from '@/composables/usePlaylistContentManagement'
@@ -338,6 +340,10 @@ const doPlayback = () =>
         break
     }
   })
+
+const { analyze } = useAudioAnalysis()
+
+const analyzeAudio = () => analyze(playables.value as Song[])
 
 const openEditForm = () =>
   trigger(() => {
