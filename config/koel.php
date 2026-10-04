@@ -137,6 +137,8 @@ return [
         'python' => env('AUDIO_ANALYSIS_PYTHON', storage_path('app/analysis-venv/bin/python')),
         'script' => base_path('scripts/analyze-audio.py'),
         'timeout' => (int) env('AUDIO_ANALYSIS_TIMEOUT', 300),
+        // Longer tracks (DJ mixes, live sets) are skipped: it takes long and the result means little.
+        'max_length' => (int) env('AUDIO_ANALYSIS_MAX_LENGTH', 600),
     ],
 
     'services' => [

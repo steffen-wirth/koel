@@ -70,6 +70,22 @@ class AudioAnalysisServiceTest extends TestCase
     }
 
     #[Test]
+    public function skipTracksLongerThanTheLimit(): void
+    {
+        $this->fakePython('{"bpm": 128, "key": "Am"}');
+        $service = app(AudioAnalysisService::class);
+
+        $long = Song::factory()->createOne(['path' => test_path('songs/full.mp3'), 'length' => 601]);
+        $limit = Song::factory()->createOne(['path' => test_path('songs/full.mp3'), 'length' => 600]);
+
+        self::assertFalse($service->analyze($long));
+        self::assertStringContainsString('longer than 10 minutes', $service->lastError());
+        self::assertNull($long->refresh()->bpm);
+
+        self::assertTrue($service->analyze($limit));
+    }
+
+    #[Test]
     public function unavailableWithoutThePythonEnvironment(): void
     {
         config(['koel.audio_analysis.python' => '/nonexistent/python']);

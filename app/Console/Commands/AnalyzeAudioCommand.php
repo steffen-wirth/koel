@@ -30,6 +30,7 @@ class AnalyzeAudioCommand extends Command
         }
 
         $query = Song::query(type: PlayableType::SONG)
+            ->where('songs.length', '<=', config('koel.audio_analysis.max_length'))
             ->when(!$this->option('force'), static fn ($q) => $q->where(
                 static fn ($q) => $q->whereNull('songs.bpm')->orWhereNull('songs.musical_key'),
             ))

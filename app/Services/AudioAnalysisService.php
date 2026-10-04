@@ -43,6 +43,12 @@ class AudioAnalysisService
             return $this->fail('only songs stored locally can be analyzed');
         }
 
+        if ($song->length > config('koel.audio_analysis.max_length')) {
+            return $this->fail(
+                'the track is longer than ' . (config('koel.audio_analysis.max_length') / 60) . ' minutes',
+            );
+        }
+
         if (!is_file($song->path)) {
             return $this->fail('the file was not found at the stored path (is the music directory mounted here?)');
         }

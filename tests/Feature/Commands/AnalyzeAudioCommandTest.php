@@ -30,6 +30,7 @@ class AnalyzeAudioCommandTest extends TestCase
         $done = Song::factory()->createOne(['bpm' => 100, 'musical_key' => 'C']);
         $missingKey = Song::factory()->createOne(['bpm' => 100, 'musical_key' => null]);
         $missingBoth = Song::factory()->createOne();
+        Song::factory()->createOne(['length' => 601]);
 
         $service = $this->mock(AudioAnalysisService::class);
         $service->expects('analyze')->twice()->andReturn(true);
