@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Album;
 use App\Models\Song;
 use App\Models\User;
+use App\Services\Integrations\BandcampService;
+use App\Services\Integrations\LeGrooveService;
 use App\Services\Integrations\MusicBrainzService;
 use Illuminate\Support\Collection;
 
@@ -12,13 +14,20 @@ class AlbumGenreService
 {
     public function __construct(
         private readonly MusicBrainzService $musicBrainz,
+        private readonly LeGrooveService $leGroove,
+        private readonly BandcampService $bandcamp,
+        private readonly GenreNormalizer $normalizer,
         private readonly SongTagWriter $tagWriter,
     ) {}
 
     /** @return list<string> */
     public function suggest(Album $album): array
     {
-        return $this->musicBrainz->getAlbumGenres($album);
+        return $this->normalizer->normalize(
+            $this->musicBrainz->getAlbumGenres($album) ?: $this->leGroove->getAlbumGenres(
+                $album,
+            ) ?: $this->bandcamp->getAlbumGenres($album),
+        );
     }
 
     /**

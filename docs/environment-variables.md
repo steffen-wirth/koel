@@ -124,6 +124,8 @@ Also see [Service Integrations](service-integrations) for detailed setup instruc
 |---|---|---|
 | `USE_MUSICBRAINZ` | Whether to use MusicBrainz for metadata fetching. | `true` |
 | `MUSICBRAINZ_USER_AGENT` | The user agent for MusicBrainz API requests. Auto-generated if empty. | _(auto-generated)_ |
+| `GOOGLE_SEARCH_API_KEY` | Google Custom Search JSON API key. With the engine ID, lets `koel:fetch-genres` find Bandcamp pages and read their tags. | _(empty)_ |
+| `GOOGLE_SEARCH_ENGINE_ID` | The ID (`cx`) of your Programmable Search Engine. | _(empty)_ |
 | `LASTFM_API_KEY` | Your Last.fm API key. Required for artist/album info and scrobbling. | _(empty)_ |
 | `LASTFM_API_SECRET` | Your Last.fm API secret. | _(empty)_ |
 | `LISTENBRAINZ_API_ENDPOINT` | The ListenBrainz API root. Change this only if you run your own ListenBrainz server. | `https://api.listenbrainz.org` |
