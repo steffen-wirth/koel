@@ -2,6 +2,7 @@
   <div
     ref="wrapper"
     class="playable-list-wrap relative flex flex-col flex-1 overflow-auto py-0"
+    :style="columnWidthVars"
     data-testid="song-list"
     @keydown.delete.prevent.stop="handleDelete"
     @keydown.enter.prevent.stop="handleEnter"
@@ -49,6 +50,7 @@ import { useListSelection } from '@/composables/useListSelection'
 import { playback } from '@/services/playbackManager'
 import { useSwipeDirection } from '@/composables/useSwipeDirection'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { usePlayableListColumnWidths } from '@/composables/usePlayableListColumnWidths'
 
 import {
   FilteredPlayablesKey,
@@ -336,6 +338,8 @@ const scrollToPlayable = (playable: Playable) => {
   }
 }
 
+const { cssVars: columnWidthVars } = usePlayableListColumnWidths()
+
 defineExpose({
   getAllPlayablesWithSort,
   scrollToPlayable,
@@ -360,48 +364,60 @@ onMounted(() => render())
     @apply text-left p-2 align-middle truncate;
 
     &.time {
-      @apply basis-20 overflow-visible;
+      @apply overflow-visible;
+      flex-basis: var(--col-time, 5rem);
     }
 
     &.track-number {
-      @apply basis-16;
+      flex-basis: var(--col-track-number, 4rem);
     }
 
     &.album {
-      @apply basis-[27%];
+      flex-basis: var(--col-album, 27%);
     }
 
     &.collaborator {
-      @apply basis-20;
+      flex-basis: var(--col-collaborator, 5rem);
     }
 
     &.year {
-      @apply basis-[64px] text-left;
+      @apply text-left;
+      flex-basis: var(--col-year, 64px);
     }
 
-    &.bpm,
+    &.bpm {
+      @apply text-left;
+      flex-basis: var(--col-bpm, 64px);
+    }
+
     &.key {
-      @apply basis-[64px] text-left;
+      @apply text-left;
+      flex-basis: var(--col-key, 64px);
     }
 
     &.genre {
-      @apply basis-48 text-left;
+      @apply text-left;
+      flex-basis: var(--col-genre, 12rem);
     }
 
     &.added-at {
-      @apply basis-44 text-left;
+      @apply text-left;
+      flex-basis: var(--col-added-at, 11rem);
     }
 
     &.file-created {
-      @apply basis-32 text-left;
+      @apply text-left;
+      flex-basis: var(--col-file-created, 8rem);
     }
 
     &.rating {
-      @apply basis-36 text-left overflow-visible;
+      @apply text-left overflow-visible;
+      flex-basis: var(--col-rating, 9rem);
     }
 
     &.favorite {
-      @apply basis-16 text-center;
+      @apply text-center;
+      flex-basis: var(--col-favorite, 4rem);
     }
 
     &.extra {
@@ -415,6 +431,10 @@ onMounted(() => render())
     &.title-artist {
       @apply flex-1;
     }
+  }
+
+  .song-list-header > span {
+    @apply relative;
   }
 
   .song-list-header {

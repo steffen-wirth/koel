@@ -13,6 +13,7 @@
         <Icon v-if="sortField === 'track' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'track' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="track-number" />
     </span>
     <span class="title-artist" data-testid="header-title" role="button" title="Sort by title" @click="sort('title')">
       Title
@@ -45,6 +46,7 @@
         <Icon v-if="sortingByAlbumOrPodcast && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortingByAlbumOrPodcast && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </span>
+      <PlayableListColumnResizer column="album" />
     </span>
     <template v-if="config.collaborative">
       <span
@@ -68,6 +70,7 @@
             class="text-k-highlight"
           />
         </template>
+        <PlayableListColumnResizer column="collaborator" />
       </span>
       <span
         v-if="shouldShowColumn('playlist_added_at')"
@@ -90,6 +93,7 @@
             class="text-k-highlight"
           />
         </template>
+        <PlayableListColumnResizer column="added-at" />
       </span>
     </template>
     <span
@@ -105,6 +109,7 @@
         <Icon v-if="sortField === 'genre' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'genre' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="genre" />
     </span>
     <span
       v-if="shouldShowColumn('year')"
@@ -119,6 +124,7 @@
         <Icon v-if="sortField === 'year' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'year' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="year" />
     </span>
     <span
       v-if="shouldShowColumn('bpm')"
@@ -133,6 +139,7 @@
         <Icon v-if="sortField === 'bpm' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'bpm' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="bpm" />
     </span>
     <span
       v-if="shouldShowColumn('key')"
@@ -147,6 +154,7 @@
         <Icon v-if="sortField === 'musical_key' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'musical_key' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="key" />
     </span>
     <span
       v-if="shouldShowColumn('file_created_at')"
@@ -169,6 +177,7 @@
           class="text-k-highlight"
         />
       </template>
+      <PlayableListColumnResizer column="file-created" />
     </span>
     <span
       v-if="shouldShowColumn('rating')"
@@ -183,6 +192,7 @@
         <Icon v-if="sortField === 'rating' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'rating' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="rating" />
     </span>
     <span
       v-if="shouldShowColumn('duration')"
@@ -197,6 +207,7 @@
         <Icon v-if="sortField === 'length' && sortOrder === 'asc'" :icon="faCaretUp" class="text-k-highlight" />
         <Icon v-if="sortField === 'length' && sortOrder === 'desc'" :icon="faCaretDown" class="text-k-highlight" />
       </template>
+      <PlayableListColumnResizer column="time" />
     </span>
     <span
       v-if="shouldShowColumn('favorite')"
@@ -215,6 +226,7 @@
           class="ml-2 text-k-highlight"
         />
       </template>
+      <PlayableListColumnResizer column="favorite" />
     </span>
     <span v-if="shouldShowActionMenu" class="extra" data-testid="header-extra">
       <PlayableListHeaderActionMenu
@@ -241,6 +253,7 @@ import type { getPlayableCollectionContentType } from '@/utils/typeGuards'
 import { useTableColumnVisibility } from '@/composables/useTableColumnVisibility'
 import { playableListColumnConfig } from '@/config/tables'
 
+import PlayableListColumnResizer from '@/components/playable/playable-list/PlayableListColumnResizer.vue'
 import PlayableListHeaderActionMenu from '@/components/playable/playable-list/PlayableListHeaderActionMenu.vue'
 
 withDefaults(
