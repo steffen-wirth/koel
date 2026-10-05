@@ -22,9 +22,9 @@ WORKDIR /var/www/html
 RUN apt-get update \
   && apt-get install --yes --no-install-recommends \
     cron libapache2-mod-xsendfile libzip-dev zip ffmpeg flac locales curl \
-    libpng-dev libjpeg62-turbo-dev libpq-dev libwebp-dev libavif-dev nano \
+    libpng-dev libjpeg62-turbo-dev libpq-dev libwebp-dev libavif-dev libicu-dev nano \
   && docker-php-ext-configure gd --with-jpeg --with-webp --with-avif \
-  && docker-php-ext-install bcmath exif gd pdo pdo_mysql pdo_pgsql pgsql zip \
+  && docker-php-ext-install bcmath exif gd intl pdo pdo_mysql pdo_pgsql pgsql zip \
   && a2enmod rewrite \
   && apt-get clean && rm -rf /var/lib/apt/lists/* \
   && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && /usr/sbin/locale-gen \
