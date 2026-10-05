@@ -56,6 +56,15 @@ class SongBuilder extends FavoriteableBuilder
         'favorite',
     ];
 
+    private const array NULLABLE_SORT_COLUMNS = [
+        'songs.year' => '0',
+        'songs.bpm' => '0',
+        'songs.musical_key' => "''",
+        'genres.name' => "''",
+        'podcasts.title' => "''",
+        'podcasts.author' => "''",
+    ];
+
     public function inDirectory(string $path): self
     {
         // Make sure the path ends with a directory separator.
@@ -195,6 +204,16 @@ class SongBuilder extends FavoriteableBuilder
                 ->addSelect(DB::raw('(COALESCE(user_ratings.rating, 0)) as user_rating_score'))
                 ->orderBy('user_rating_score', $direction)
                 ->orderBy('songs.title');
+        }
+
+        // Cursor pagination can't compare against NULL values, so nullable columns are sorted by a COALESCEd alias.
+        if (array_key_exists($column, self::NULLABLE_SORT_COLUMNS)) {
+            $alias = str_replace('.', '_', $column) . '_sort';
+            $default = self::NULLABLE_SORT_COLUMNS[$column];
+
+            $this->addSelect(DB::raw("(COALESCE($column, $default)) as $alias"))->orderBy($alias, $direction);
+
+            return $this->orderBy('songs.title');
         }
 
         return $this
