@@ -43,17 +43,34 @@ class FetchGenresCommand extends Command
             ->when($limit, static fn ($query) => $query->limit($limit))
             ->get();
 
-        $rows = $albums->map(function (Album $album) use ($dryRun): array {
+        $withGenres = 0;
+        $genreCount = 0;
+
+        $rows = $albums->map(function (Album $album) use ($dryRun, &$withGenres, &$genreCount): array {
             $genres = $this->service->suggest($album);
 
             if (!$dryRun && $genres) {
                 $this->service->addToSongs($album, $genres);
             }
 
+            if ($genres) {
+                $withGenres++;
+                $genreCount += count($genres);
+            }
+
             return [$album->artist_name, $album->name, implode(', ', $genres) ?: '—'];
         });
 
         $this->table(['Artist', 'Album', $dryRun ? 'Suggested genres' : 'Added genres'], $rows->all());
+        $this->components->info('Statistics');
+        $this->components->twoColumnDetail('Albums processed', (string) $albums->count());
+        $this->components->twoColumnDetail(
+            $dryRun ? 'Albums with suggestions' : 'Albums with genres added',
+            (string) $withGenres,
+        );
+        $this->components->twoColumnDetail('Albums without any genre found', (string) ($albums->count() - $withGenres));
+        $this->components->twoColumnDetail($dryRun ? 'Genres suggested' : 'Genres added', (string) $genreCount);
+
         $this->components->success($dryRun ? 'Nothing was changed (dry run).' : 'All done!');
 
         return self::SUCCESS;

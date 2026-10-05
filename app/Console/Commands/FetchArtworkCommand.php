@@ -33,6 +33,8 @@ class FetchArtworkCommand extends Command
             return self::FAILURE;
         }
 
+        $stats = ['artist' => ['ok' => 0, 'failed' => 0], 'album' => ['ok' => 0, 'failed' => 0]];
+
         $this->components->info('Fetching artist images...');
 
         Artist::query()
@@ -40,11 +42,12 @@ class FetchArtworkCommand extends Command
             ->where(static fn (ArtistBuilder $query) => $query->whereNull('image')->orWhere('image', ''))
             ->orderBy('name')
             ->lazy()
-            ->each(function (Artist $artist) use ($delay): void {
+            ->each(function (Artist $artist) use ($delay, &$stats): void {
                 Cache::forget(cache_key('artist information', $artist->name));
 
                 $this->encyclopedia->getArtistInformation($artist);
 
+                $stats['artist'][$artist->image ? 'ok' : 'failed']++;
                 $status = $artist->image ? '<info>OK</info>' : '<error>Failed</error>';
                 $this->components->twoColumnDetail($artist->name, $status);
 
@@ -59,16 +62,26 @@ class FetchArtworkCommand extends Command
             ->where(static fn (AlbumBuilder $query) => $query->whereNull('cover')->orWhere('cover', ''))
             ->orderBy('name')
             ->lazy()
-            ->each(function (Album $album) use ($delay): void {
+            ->each(function (Album $album) use ($delay, &$stats): void {
                 Cache::forget(cache_key('album information', $album->name));
 
                 $this->encyclopedia->getAlbumInformation($album);
 
+                $stats['album'][$album->cover ? 'ok' : 'failed']++;
                 $status = $album->cover ? '<info>OK</info>' : '<error>Failed</error>';
                 $this->components->twoColumnDetail($album->name . ' - ' . $album->artist_name, $status);
 
                 sleep($delay);
             });
+
+        $this->newLine();
+        $this->components->info('Statistics');
+        $this->components->twoColumnDetail('Artists processed', (string) array_sum($stats['artist']));
+        $this->components->twoColumnDetail('Artist images found', (string) $stats['artist']['ok']);
+        $this->components->twoColumnDetail('Artist images not found', (string) $stats['artist']['failed']);
+        $this->components->twoColumnDetail('Albums processed', (string) array_sum($stats['album']));
+        $this->components->twoColumnDetail('Album covers found', (string) $stats['album']['ok']);
+        $this->components->twoColumnDetail('Album covers not found', (string) $stats['album']['failed']);
 
         $this->components->success('All done!');
 
